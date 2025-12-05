@@ -14,6 +14,7 @@ import uvicorn
 import watchfiles
 
 from backend.modules.auth import auth_controller
+from backend.modules.dashboard import dashboard_controller
 from backend.state import AppState
 
 
@@ -77,6 +78,7 @@ app = Starlette(
 		Route("/", homepage_handler(dev), methods=["GET"]),
 		Mount("/assets", StaticFiles(directory="dist/assets"), name="assets"),
 		Mount("/auth", routes=auth_controller.routes),
+		Mount("/dashboard", routes=dashboard_controller.routes),
 	],
 	lifespan=lifespan,
 )

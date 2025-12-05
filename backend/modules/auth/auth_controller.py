@@ -1,3 +1,4 @@
+from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from starlette.requests import Request
 from starlette.responses import Response
@@ -9,6 +10,13 @@ from backend.state import AppState
 from .auth_models import UserCreate, UserLogin
 from .auth_service import authenticate, hash_create, logout
 from .auth_service import hash_verify
+
+
+def strip_prefix(text: str, prefix: str) -> str:
+	"""Remove prefix from text if present, otherwise return text unchanged."""
+	if text.startswith(prefix):
+		return text[len(prefix) :]
+	return text
 
 
 async def handle_register(request: Request) -> Response:
@@ -28,6 +36,12 @@ async def handle_register(request: Request) -> Response:
 			db.refresh(user_db)
 
 			return authenticate(user_db)
+		except ValidationError as e:
+			# Extract first error message from pydantic validation error
+			first_error = e.errors()[0]
+			error_msg = first_error.get("msg", str(e))
+			error_msg = strip_prefix(error_msg, "Value error, ")
+			return Response(error_msg, status_code=400)
 		except ValueError as e:
 			return Response(str(e), status_code=400)
 		except IntegrityError:
@@ -45,13 +59,19 @@ async def handle_login(request: Request) -> Response:
 			user = db.query(User).filter((User.email == user_login.email)).first()
 
 			if user is None:
-				return Response("Invalid credentials", status_code=401)
+				return Response("Wrong username or password", status_code=400)
 
 			if not hash_verify(user_login.password, str(user.password_hash)):
-				return Response("Invalid credentials", status_code=401)
+				return Response("Wrong username or password", status_code=400)
 
 			return authenticate(user)
 
+		except ValidationError as e:
+			# Extract first error message from pydantic validation error
+			first_error = e.errors()[0]
+			error_msg = first_error.get("msg", str(e))
+			error_msg = strip_prefix(error_msg, "Value error, ")
+			return Response(error_msg, status_code=400)
 		except ValueError as e:
 			return Response(str(e), status_code=400)
 

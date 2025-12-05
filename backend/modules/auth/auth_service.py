@@ -88,6 +88,6 @@ def get_user(request: Request) -> User | None:
 
 
 def logout() -> Response:
-	response = Response("success", status_code=200)
+	response = JSONResponse({"message": "Successfully logged out"}, status_code=200)
 	response.delete_cookie(key="access_token")
 	return response
