@@ -8,7 +8,7 @@ from backend.modules.auth.auth_service import get_user
 async def handle_dashboard(request: Request) -> Response:
 	user = get_user(request)
 	if user is None:
-		return Response("Unauthenticated", status_code=304)
+		return Response(status_code=401)
 
 	return JSONResponse(
 		{

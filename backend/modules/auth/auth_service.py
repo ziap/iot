@@ -12,7 +12,7 @@ from backend.state import AppState
 secret_key = env.get("JWT_SECRET_KEY", default="secret-key")
 token_expire_min = int(env.get("JWT_EXPIRE_MIN", default="30"))
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def hash_create(password: str) -> str:

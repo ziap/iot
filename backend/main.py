@@ -7,7 +7,7 @@ from typing import Callable
 import aiofiles
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import Response, HTMLResponse
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 import uvicorn
@@ -25,14 +25,14 @@ def homepage_handler(dev: bool) -> Callable[[Request], Awaitable[Response]]:
 			async with aiofiles.open("dist/index.html") as f:
 				data = await f.read()
 
-			return Response(data, media_type="text/html")
+			return HTMLResponse(data)
 
 		return handler
 
 	with open("dist/index.html") as f:
 		data = f.read()
 
-	response = Response(data, media_type="text/html")
+	response = HTMLResponse(data)
 
 	async def handler(_: Request) -> Response:
 		return response

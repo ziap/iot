@@ -42,8 +42,6 @@ async def handle_register(request: Request) -> Response:
 			error_msg = first_error.get("msg", str(e))
 			error_msg = strip_prefix(error_msg, "Value error, ")
 			return Response(error_msg, status_code=400)
-		except ValueError as e:
-			return Response(str(e), status_code=400)
 		except IntegrityError:
 			db.rollback()
 			return Response("Username or email already registered", status_code=400)
@@ -59,10 +57,10 @@ async def handle_login(request: Request) -> Response:
 			user = db.query(User).filter((User.email == user_login.email)).first()
 
 			if user is None:
-				return Response("Wrong username or password", status_code=400)
+				return Response("Wrong username or password", status_code=401)
 
 			if not hash_verify(user_login.password, str(user.password_hash)):
-				return Response("Wrong username or password", status_code=400)
+				return Response("Wrong username or password", status_code=401)
 
 			return authenticate(user)
 
@@ -72,8 +70,6 @@ async def handle_login(request: Request) -> Response:
 			error_msg = first_error.get("msg", str(e))
 			error_msg = strip_prefix(error_msg, "Value error, ")
 			return Response(error_msg, status_code=400)
-		except ValueError as e:
-			return Response(str(e), status_code=400)
 
 
 async def handle_logout(_: Request) -> Response:

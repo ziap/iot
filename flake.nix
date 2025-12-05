@@ -19,7 +19,7 @@
           python-pkgs.email-validator
           python-pkgs.python-jose
           python-pkgs.passlib
-          python-pkgs.bcrypt
+          python-pkgs.argon2-cffi
           python-pkgs.starlette
           python-pkgs.uvicorn
           python-pkgs.aiofiles

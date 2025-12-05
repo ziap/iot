@@ -18,7 +18,6 @@ export async function apiFetch(url: string, options: FetchOptions = {}): Promise
 			if (handleLogout) {
 				handleLogout()
 			}
-			throw new Error(`Authentication failed: ${response.status} ${response.statusText}`)
 		}
 
 		return response

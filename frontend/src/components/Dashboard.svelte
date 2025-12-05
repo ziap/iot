@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
-	import { apiFetch, apiGet } from '../utils/api'
+	import { apiPost, apiGet } from '../utils/api'
 
 	interface Props {
 		username: string
@@ -34,10 +34,7 @@
 	async function handleLogout() {
 		loading = true
 		try {
-			await apiFetch('/auth/logout', {
-				method: 'POST',
-				handleLogout: onLogout,
-			})
+			await apiPost('/auth/logout')
 			onLogout()
 		} catch (err) {
 			console.error('Logout failed:', err)
