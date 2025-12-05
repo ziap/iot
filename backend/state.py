@@ -18,22 +18,38 @@ class AppState:
 	session: sessionmaker
 
 	@classmethod
-	def init(cls, app: Starlette):
+	def init(cls, app: Starlette) -> AppState:
 		db_url = env.get("DATABASE_URL", default="sqlite:///./data.db")
-		db_engine = create_engine(db_url)
+		connect_args = {}
+		if db_url.startswith("sqlite"):
+			connect_args = {"check_same_thread": False}
 
-		Base.metadata.create_all(bind=db_engine)
+		engine = create_engine(db_url, connect_args=connect_args)
 
-		app.state.data = cls(
-			db_engine=db_engine,
-			session=sessionmaker(autocommit=False, autoflush=False, bind=db_engine),
+		Base.metadata.create_all(bind=engine)
+
+		state = cls(
+			db_engine=engine,
+			session=sessionmaker(
+				autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
+			),
 		)
+
+		app.state.data = state
+		return state
+
+	def deinit(self):
+		self.db_engine.dispose()
 
 	@contextmanager
 	def get_db(self) -> Generator[Session]:
 		db = self.session()
 		try:
 			yield db
+			db.commit()
+		except Exception:
+			db.rollback()
+			raise
 		finally:
 			db.close()
 

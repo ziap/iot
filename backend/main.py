@@ -1,8 +1,8 @@
 import asyncio
-from collections.abc import Coroutine
+from collections.abc import Awaitable
 from contextlib import asynccontextmanager
 from os import environ as env
-from typing import Any, Callable
+from typing import Callable
 
 import aiofiles
 from starlette.applications import Starlette
@@ -17,7 +17,7 @@ from backend.modules.auth import auth_controller
 from backend.state import AppState
 
 
-def homepage_handler(dev: bool) -> Callable[[Request], Coroutine[Any, Any, Response]]:
+def homepage_handler(dev: bool) -> Callable[[Request], Awaitable[Response]]:
 	if dev:
 
 		async def handler(_: Request) -> Response:
@@ -62,11 +62,14 @@ async def lifespan(app: Starlette):
 	if dev:
 		await build_frontend()
 		task = asyncio.create_task(frontend_watcher())
-		AppState.init(app)
+		state = AppState.init(app)
 		yield
+		state.deinit()
 		task.cancel()
 	else:
-		AppState.init(app)
+		state = AppState.init(app)
+		yield
+		state.deinit()
 
 
 app = Starlette(
