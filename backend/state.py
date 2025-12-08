@@ -12,10 +12,29 @@ from starlette.requests import Request
 from backend.models import Base
 
 
+import asyncio
+from collections.abc import Awaitable, Callable
+
+
+def start_task(
+	callback: Callable[[], Awaitable[None]], interval: float
+) -> asyncio.Task[None]:
+	async def task():
+		while True:
+			await callback()
+			await asyncio.sleep(interval)
+
+	return asyncio.create_task(task())
+
+
 @dataclass
 class AppState:
 	db_engine: Engine
-	session: sessionmaker
+	session: sessionmaker[Session]
+
+	ws_connections: dict[str, object]
+
+	sensor_task: asyncio.Task[None] | None = None
 
 	@classmethod
 	def init(cls, app: Starlette) -> AppState:
@@ -33,12 +52,13 @@ class AppState:
 			session=sessionmaker(
 				autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
 			),
+			ws_connections=dict(),
 		)
 
 		app.state.data = state
 		return state
 
-	def deinit(self):
+	async def deinit(self) -> None:
 		self.db_engine.dispose()
 
 	@contextmanager

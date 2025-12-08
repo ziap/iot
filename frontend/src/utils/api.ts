@@ -49,7 +49,7 @@ export async function apiGet<T>(url: string, options: FetchOptions = {}): Promis
  */
 export async function apiPost<T>(
 	url: string,
-	body: Record<string, unknown>,
+	body?: Record<string, unknown>,
 	options: FetchOptions = {},
 ): Promise<T> {
 	const response = await apiFetch(url, {
@@ -59,7 +59,7 @@ export async function apiPost<T>(
 			'Content-Type': 'application/json',
 			...options.headers,
 		},
-		body: JSON.stringify(body),
+		body: body ? JSON.stringify(body) : undefined,
 	})
 
 	if (!response.ok) {

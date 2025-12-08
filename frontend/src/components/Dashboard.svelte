@@ -7,9 +7,22 @@
 		onLogout: () => void
 	}
 
+	type SensorData = {
+		id: number
+		timestamp: string
+		temperature: number
+		gas: number
+	}
+
 	type DashboardData = {
 		message?: string
 		devices?: string[]
+		sensor_data?: SensorData[]
+		ws_token?: string
+	}
+
+	type PollStatus = {
+		is_polling: boolean
 	}
 
 	let { username, onLogout }: Props = $props()
@@ -17,6 +30,52 @@
 	let loading = $state(false)
 	let dashboardData = $state<DashboardData>({})
 	let fetchError = $state<string | null>(null)
+	let isPolling = $state(false)
+	let pollingLoading = $state(false)
+	let ws: WebSocket | null = $state(null)
+	let wsConnected = $state(false)
+
+	function connectWebSocket(token: string) {
+		// Close existing connection if any
+		if (ws) {
+			ws.close()
+		}
+
+		// Determine WebSocket URL
+		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+		const wsUrl = `${protocol}//${window.location.host}/ws?token=${token}`
+
+		const websocket = new WebSocket(wsUrl)
+
+		websocket.onopen = () => {
+			console.log('WebSocket connected')
+			wsConnected = true
+		}
+
+		websocket.onmessage = event => {
+			try {
+				const sensorData: SensorData = JSON.parse(event.data)
+				console.log('Real-time sensor data:', sensorData)
+
+				// Add new data to the beginning of the array
+				dashboardData.sensor_data.push(sensorData)
+			} catch (err) {
+				console.error('Failed to parse WebSocket message:', err)
+			}
+		}
+
+		websocket.onerror = error => {
+			console.error('WebSocket error:', error)
+			wsConnected = false
+		}
+
+		websocket.onclose = () => {
+			console.log('WebSocket disconnected')
+			wsConnected = false
+		}
+
+		ws = websocket
+	}
 
 	async function fetchDashboardData() {
 		try {
@@ -25,9 +84,45 @@
 			})
 			dashboardData = data
 			fetchError = null
+
+			// Log sensor data to console
+			if (data.sensor_data) {
+				console.log('Sensor data from last 3 days:', data.sensor_data)
+			}
+
+			// Connect WebSocket with token
+			if (data.ws_token) {
+				connectWebSocket(data.ws_token)
+			}
 		} catch (err) {
 			console.error('Failed to fetch dashboard data:', err)
 			fetchError = err instanceof Error ? err.message : 'Failed to load dashboard data'
+		}
+	}
+
+	async function fetchPollStatus() {
+		try {
+			const data = await apiGet<PollStatus>('/dashboard/poll/status', {
+				handleLogout: onLogout,
+			})
+			isPolling = data.is_polling
+		} catch (err) {
+			console.error('Failed to fetch poll status:', err)
+		}
+	}
+
+	async function togglePolling() {
+		pollingLoading = true
+		try {
+			const data = await apiPost<PollStatus>('/dashboard/poll/toggle', undefined, {
+				handleLogout: onLogout,
+			})
+			isPolling = data.is_polling
+			console.log(data.is_polling ? 'Polling started' : 'Polling stopped')
+		} catch (err) {
+			console.error('Failed to toggle polling:', err)
+		} finally {
+			pollingLoading = false
 		}
 	}
 
@@ -47,6 +142,14 @@
 
 	onMount(() => {
 		fetchDashboardData()
+		fetchPollStatus()
+
+		// Cleanup WebSocket on unmount
+		return () => {
+			if (ws) {
+				ws.close()
+			}
+		}
 	})
 </script>
 
@@ -76,6 +179,41 @@
 				<p class="text-gray-600">{dashboardData.message}</p>
 			{:else}
 				<p class="text-gray-600">Dashboard content will appear here.</p>
+			{/if}
+		</div>
+
+		<div class="border-t pt-6 mt-6">
+			<div class="flex items-center justify-between mb-4">
+				<h2 class="text-xl font-semibold">Sensor Polling</h2>
+				<div class="flex items-center gap-4">
+					<div class="flex items-center gap-2">
+						<div class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"></div>
+						<p class="text-sm text-gray-600">
+							{wsConnected ? 'Live' : 'Offline'}
+						</p>
+					</div>
+					<button
+						onclick={togglePolling}
+						disabled={pollingLoading}
+						class="px-4 py-2 rounded-md text-white font-medium disabled:bg-gray-400 disabled:cursor-not-allowed {isPolling
+							? 'bg-red-600 hover:bg-red-700'
+							: 'bg-green-600 hover:bg-green-700'}"
+					>
+						{pollingLoading ? 'Loading...' : isPolling ? 'Stop Polling' : 'Start Polling'}
+					</button>
+				</div>
+			</div>
+			<div class="flex items-center gap-2 mb-2">
+				<div class="w-3 h-3 rounded-full {isPolling ? 'bg-green-500' : 'bg-gray-400'}"></div>
+				<p class="text-gray-600">
+					Polling: {isPolling ? 'Active' : 'Inactive'}
+				</p>
+			</div>
+			{#if dashboardData.sensor_data && dashboardData.sensor_data.length > 0}
+				<p class="text-sm text-gray-500 mt-2">
+					{dashboardData.sensor_data.length} sensor readings (real-time updates enabled, check console
+					for details)
+				</p>
 			{/if}
 		</div>
 	</div>

@@ -20,6 +20,7 @@
           python-pkgs.passlib
           python-pkgs.argon2-cffi
           python-pkgs.starlette
+          python-pkgs.websockets
           python-pkgs.uvicorn
           python-pkgs.aiofiles
           python-pkgs.sqlalchemy

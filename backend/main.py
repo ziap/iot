@@ -14,6 +14,7 @@ import uvicorn
 
 from backend.modules.auth import auth_controller
 from backend.modules.dashboard import dashboard_controller
+from backend.modules.websocket import websocket_controller
 from backend.state import AppState
 
 
@@ -60,14 +61,14 @@ async def lifespan(app: Starlette):
 		)
 		state = AppState.init(app)
 		yield
-		state.deinit()
+		await state.deinit()
 		if proc.returncode is None:
 			proc.terminate()
 			await proc.wait()
 	else:
 		state = AppState.init(app)
 		yield
-		state.deinit()
+		await state.deinit()
 
 
 app = Starlette(
@@ -76,6 +77,7 @@ app = Starlette(
 		Mount("/assets", StaticFiles(directory="dist/assets"), name="assets"),
 		Mount("/auth", routes=auth_controller.routes),
 		Mount("/dashboard", routes=dashboard_controller.routes),
+		*websocket_controller.routes,
 	],
 	lifespan=lifespan,
 )
