@@ -20,32 +20,34 @@ from paho.mqtt.client import Client
 from paho import mqtt
 
 
-MQTT_HOST = env.get("MQTT_HOST", "localhost") 
+MQTT_HOST = env.get("MQTT_HOST", "localhost")
 MQTT_PORT = int(env.get("MQTT_PORT", 8883))
 MQTT_USER = env.get("MQTT_USER", "")
 MQTT_PASS = env.get("MQTT_PASS", "")
 
-def init_mqtt() -> Client :
+
+def init_mqtt() -> Client:
 	client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 
 	def on_connect(client, userdata, flags, rc, properties=None):
-		print("CONNACK received with code %s." %rc)
+		print("CONNACK received with code %s." % rc)
+
 	client.on_connect = on_connect
 
 	def on_publish(client, userdata, mid, properties=None):
 		print("mid: " + str(mid))
+
 	client.on_publish = on_publish
 
-	client.tls_set( 
-		tls_version=mqtt.client.ssl.PROTOCOL_TLS	
-    )
+	client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
 
 	client.username_pw_set(MQTT_USER, MQTT_PASS)
 	client.connect(MQTT_HOST, MQTT_PORT)
-	
+
 	client.loop_start()
-	
+
 	return client
+
 
 def start_task(
 	callback: Callable[[], Awaitable[None]], interval: float
@@ -68,7 +70,6 @@ class AppState:
 	mqtt_client: Client
 
 	sensor_task: asyncio.Task[None] | None = None
-
 
 	@classmethod
 	def init(cls, app: Starlette) -> AppState:
@@ -123,4 +124,3 @@ class AppState:
 	@staticmethod
 	def get(request: HTTPConnection) -> AppState:
 		return request.app.state.data
-	
