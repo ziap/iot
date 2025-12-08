@@ -7,7 +7,7 @@ from backend.models import SensorData
 from backend.state import AppState
 
 
-async def fetch_sensor_data() -> tuple[float, float]:
+async def fetch_sensor_data(state: AppState) -> tuple[float, float]:
 	"""
 	Fetch sensor data from the hardware.
 	Currently returns random data for testing purposes.
@@ -20,8 +20,8 @@ async def fetch_sensor_data() -> tuple[float, float]:
 	await asyncio.sleep(0.1)
 
 	# Generate random sensor data
-	temperature = round(random.uniform(18.0, 30.0), 2)
-	gas = round(random.uniform(300.0, 500.0), 2)
+	temperature = state.temperature
+	gas = state.gas
 
 	return temperature, gas
 
@@ -53,7 +53,7 @@ async def poll_sensors(state: AppState) -> None:
 	Poll sensors and store the data in the database.
 	This function is called periodically by the sensor task.
 	"""
-	temperature, gas = await fetch_sensor_data()
+	temperature, gas = await fetch_sensor_data(state)
 	timestamp = datetime.now()
 
 	with state.get_db() as db:
