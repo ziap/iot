@@ -1,6 +1,7 @@
 import asyncio
 import random
 from datetime import datetime
+from typing import cast
 
 from backend.models import SensorData
 from backend.modules.websocket.websocket_service import broadcast_sensor_data
@@ -43,7 +44,7 @@ async def poll_sensors(state: AppState) -> None:
 	await broadcast_sensor_data(
 		state,
 		{
-			"id": int(sensor_data.id),
+			"id": cast(int, sensor_data.id),
 			"timestamp": timestamp.isoformat(),
 			"temperature": temperature,
 			"gas": gas,
