@@ -28,25 +28,13 @@ MQTT_PASS = env.get("MQTT_PASS", "")
 def init_mqtt() -> Client :
 	client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
 
-	# setting callbacks for different events to see if it works, print the message etc.
 	def on_connect(client, userdata, flags, rc, properties=None):
 		print("CONNACK received with code %s." %rc)
 	client.on_connect = on_connect
 
-	# with this callback you can see if your publish was successful
 	def on_publish(client, userdata, mid, properties=None):
 		print("mid: " + str(mid))
 	client.on_publish = on_publish
-
-	# print which topic was subscribed to
-	def on_subscribe(client, userdata, mid, granted_qos, properties=None):
-		print("Subscribed: " + str(mid) + " " + str(granted_qos))
-	client.on_subscribe = on_subscribe
-	
-	# print message, useful for checking if it was successful
-	def on_message(client, userdata, msg):
-		print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
-	client.on_message = on_message
 
 	client.tls_set( 
 		tls_version=mqtt.client.ssl.PROTOCOL_TLS	
@@ -56,8 +44,7 @@ def init_mqtt() -> Client :
 	client.connect(MQTT_HOST, MQTT_PORT)
 	
 	client.loop_start()
-	print("MQTT connected to HiveMQ Cloud!")
-
+	
 	return client
 
 def start_task(
@@ -78,7 +65,7 @@ class AppState:
 
 	ws_connections: set[WebSocket]
 
-	mqtt_client: Client = init_mqtt()
+	mqtt_client: Client
 
 	sensor_task: asyncio.Task[None] | None = None
 
@@ -100,6 +87,7 @@ class AppState:
 				autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
 			),
 			ws_connections=set(),
+			mqtt_client=init_mqtt(),
 		)
 
 		app.state.data = state
