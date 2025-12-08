@@ -1,5 +1,5 @@
-from starlette.websockets import WebSocket, WebSocketDisconnect
 from starlette.routing import BaseRoute, WebSocketRoute
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from backend.modules.websocket.websocket_service import verify_ws_token
 from backend.state import AppState

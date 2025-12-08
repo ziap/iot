@@ -8,8 +8,7 @@ from backend.models import User
 from backend.state import AppState
 
 from .auth_models import UserCreate, UserLogin
-from .auth_service import authenticate, hash_create, logout
-from .auth_service import hash_verify
+from .auth_service import authenticate, hash_create, hash_verify, logout
 
 
 def strip_prefix(text: str, prefix: str) -> str:

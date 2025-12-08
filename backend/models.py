@@ -26,7 +26,7 @@ class SensorData(Base):
 
 	id = Column(Integer, primary_key=True, index=True)
 	timestamp = Column(
-		DateTime(timezone=True), server_default=func.now(), nullable=False
+		DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
 	)
 	temperature = Column(Float, nullable=False)
 	gas = Column(Float, nullable=False)

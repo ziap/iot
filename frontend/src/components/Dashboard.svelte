@@ -9,16 +9,16 @@
 
 	type SensorData = {
 		id: number
-		timestamp: string
+		timestamp: Date
 		temperature: number
 		gas: number
 	}
 
-	type DashboardData = {
-		message?: string
-		devices?: string[]
-		sensor_data?: SensorData[]
-		ws_token?: string
+	type SensorDataRaw = {
+		id: number
+		timestamp: string
+		temperature: number
+		gas: number
 	}
 
 	type PollStatus = {
@@ -28,7 +28,7 @@
 	let { username, onLogout }: Props = $props()
 
 	let loading = $state(false)
-	let dashboardData = $state<DashboardData>({})
+	let sensorData = $state<SensorData[]>([])
 	let fetchError = $state<string | null>(null)
 	let isPolling = $state(false)
 	let pollingLoading = $state(false)
@@ -47,52 +47,65 @@
 
 		const websocket = new WebSocket(wsUrl)
 
-		websocket.onopen = () => {
+		websocket.addEventListener('open', () => {
 			console.log('WebSocket connected')
 			wsConnected = true
-		}
+		})
 
-		websocket.onmessage = event => {
+		websocket.addEventListener('message', event => {
 			try {
-				const sensorData: SensorData = JSON.parse(event.data)
-				console.log('Real-time sensor data:', sensorData)
+				const rawData: SensorDataRaw = JSON.parse(event.data)
 
 				// Add new data to the beginning of the array
-				dashboardData.sensor_data.push(sensorData)
+				sensorData.push({
+					...rawData,
+					timestamp: new Date(rawData.timestamp),
+				})
 			} catch (err) {
 				console.error('Failed to parse WebSocket message:', err)
 			}
-		}
+		})
 
-		websocket.onerror = error => {
+		websocket.addEventListener('error', error => {
 			console.error('WebSocket error:', error)
 			wsConnected = false
-		}
+		})
 
-		websocket.onclose = () => {
+		websocket.addEventListener('close', () => {
 			console.log('WebSocket disconnected')
 			wsConnected = false
-		}
+		})
 
 		ws = websocket
 	}
 
 	async function fetchDashboardData() {
 		try {
-			const data = await apiGet<DashboardData>('/dashboard/', {
+			const response = await apiGet<{
+				username: string
+				sensor_data?: SensorDataRaw[]
+				ws_token?: string
+			}>('/dashboard/', {
 				handleLogout: onLogout,
 			})
-			dashboardData = data
+
+			// Parse timestamps to Date objects
+			for (const dataPoint of response.sensor_data) {
+				sensorData.push({
+					...dataPoint,
+					timestamp: new Date(dataPoint.timestamp),
+				})
+			}
 			fetchError = null
 
 			// Log sensor data to console
-			if (data.sensor_data) {
-				console.log('Sensor data from last 3 days:', data.sensor_data)
+			if (sensorData) {
+				console.log('Sensor data from last 3 days:', sensorData)
 			}
 
 			// Connect WebSocket with token
-			if (data.ws_token) {
-				connectWebSocket(data.ws_token)
+			if (response.ws_token) {
+				connectWebSocket(response.ws_token)
 			}
 		} catch (err) {
 			console.error('Failed to fetch dashboard data:', err)
@@ -151,6 +164,10 @@
 			}
 		}
 	})
+
+	$effect(() => {
+		console.log("updated sensor data:", Array.from(sensorData))
+	})
 </script>
 
 <div class="w-full max-w-4xl mx-auto p-6">
@@ -175,8 +192,6 @@
 				<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
 					{fetchError}
 				</div>
-			{:else if dashboardData.message}
-				<p class="text-gray-600">{dashboardData.message}</p>
 			{:else}
 				<p class="text-gray-600">Dashboard content will appear here.</p>
 			{/if}
@@ -209,9 +224,9 @@
 					Polling: {isPolling ? 'Active' : 'Inactive'}
 				</p>
 			</div>
-			{#if dashboardData.sensor_data && dashboardData.sensor_data.length > 0}
+			{#if sensorData.length > 0}
 				<p class="text-sm text-gray-500 mt-2">
-					{dashboardData.sensor_data.length} sensor readings (real-time updates enabled, check console
+					{sensorData.length} sensor readings (real-time updates enabled, check console
 					for details)
 				</p>
 			{/if}

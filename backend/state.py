@@ -1,5 +1,7 @@
 from __future__ import annotations
-from collections.abc import Generator
+
+import asyncio
+from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from os import environ as env
@@ -11,10 +13,6 @@ from starlette.requests import HTTPConnection
 from starlette.websockets import WebSocket
 
 from backend.models import Base
-
-
-import asyncio
-from collections.abc import Awaitable, Callable
 
 
 def start_task(

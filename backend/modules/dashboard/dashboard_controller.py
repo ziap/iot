@@ -1,5 +1,5 @@
 from starlette.requests import Request
-from starlette.responses import Response, JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.routing import BaseRoute, Mount, Route
 
 from backend.modules.auth.auth_service import get_user

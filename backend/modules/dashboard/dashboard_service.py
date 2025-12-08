@@ -2,11 +2,10 @@ from datetime import datetime, timedelta
 
 from backend.models import SensorData
 from backend.state import AppState
+from backend.tasks.poll_sensors import SensorDataDict
 
 
-def get_sensor_data(
-	state: AppState, days: int = 3
-) -> list[dict[str, float | str | int]]:
+def get_sensor_data(state: AppState, days: int = 3) -> list[SensorDataDict]:
 	n_days_ago = datetime.now() - timedelta(days=days)
 
 	with state.get_db() as db:

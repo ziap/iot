@@ -2,9 +2,17 @@ import asyncio
 import json
 import random
 from datetime import datetime
+from typing import TypedDict
 
 from backend.models import SensorData
 from backend.state import AppState
+
+
+class SensorDataDict(TypedDict):
+	id: int
+	timestamp: str
+	temperature: float
+	gas: float
 
 
 async def fetch_sensor_data() -> tuple[float, float]:
@@ -26,9 +34,7 @@ async def fetch_sensor_data() -> tuple[float, float]:
 	return temperature, gas
 
 
-async def broadcast_sensor_data(
-	state: AppState, data: dict[str, float | str | int]
-) -> None:
+async def broadcast_sensor_data(state: AppState, data: SensorDataDict) -> None:
 	"""
 	Broadcast sensor data to all connected WebSocket clients.
 	Removes closed connections from the dictionary.
@@ -62,7 +68,7 @@ async def poll_sensors(state: AppState) -> None:
 		db.commit()
 
 		# Get the ID after commit
-		data_dict = {
+		data_dict: SensorDataDict = {
 			"id": sensor_data.id,
 			"timestamp": timestamp.isoformat(),
 			"temperature": temperature,

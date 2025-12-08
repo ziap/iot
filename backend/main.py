@@ -5,12 +5,12 @@ from os import environ as env
 from typing import Callable
 
 import aiofiles
+import uvicorn
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, Response
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
-import uvicorn
 
 from backend.modules.auth import auth_controller
 from backend.modules.dashboard import dashboard_controller
