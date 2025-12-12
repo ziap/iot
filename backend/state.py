@@ -15,6 +15,40 @@ from starlette.websockets import WebSocket
 from backend.models import Base
 
 
+import paho.mqtt.client as paho
+from paho.mqtt.client import Client
+from paho import mqtt
+
+
+MQTT_HOST = env.get("MQTT_HOST", "localhost")
+MQTT_PORT = int(env.get("MQTT_PORT", 8883))
+MQTT_USER = env.get("MQTT_USER", "")
+MQTT_PASS = env.get("MQTT_PASS", "")
+
+
+def init_mqtt() -> Client:
+	client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
+
+	def on_connect(client, userdata, flags, rc, properties=None):
+		print("CONNACK received with code %s." % rc)
+
+	client.on_connect = on_connect
+
+	def on_publish(client, userdata, mid, properties=None):
+		print("mid: " + str(mid))
+
+	client.on_publish = on_publish
+
+	client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
+
+	client.username_pw_set(MQTT_USER, MQTT_PASS)
+	client.connect(MQTT_HOST, MQTT_PORT)
+
+	client.loop_start()
+
+	return client
+
+
 def start_task(
 	callback: Callable[[], Awaitable[None]], interval: float
 ) -> asyncio.Task[None]:
@@ -32,6 +66,8 @@ class AppState:
 	session: sessionmaker[Session]
 
 	ws_connections: set[WebSocket]
+
+	mqtt_client: Client
 
 	sensor_task: asyncio.Task[None] | None = None
 
@@ -52,9 +88,11 @@ class AppState:
 				autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
 			),
 			ws_connections=set(),
+			mqtt_client=init_mqtt(),
 		)
 
 		app.state.data = state
+
 		return state
 
 	async def deinit(self) -> None:
