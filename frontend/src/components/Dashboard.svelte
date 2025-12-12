@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
 	import { apiPost, apiGet } from '../utils/api'
-	import type { ApexOptions } from 'apexcharts'
-	import { chart } from 'svelte-apexcharts'
-	import { preventDefault } from 'svelte/legacy'
+	import LineChart from './LineChart.svelte'
+	import Scatterplot from './scatterplot.svelte'
 
 	type Props = {
 		username: string
@@ -51,7 +50,7 @@
 	let onBuzzer: boolean = $state(false)
 	let onRelay: boolean = $state(false)
 
-	let activeTab: 'temp' | 'gas' | 'all' = $state('all')
+	let activeTab: 'temp' | 'gas' | 'all' | "scatterplot" = $state('all')
 
 	const tempData = $derived(
 		sensorData
@@ -233,102 +232,6 @@
 		return '#22c55e' // xanh lá
 	}
 
-	let tempOptions: ApexOptions = $derived({
-		chart: {
-			height: 400,
-			type: 'line',
-			fontFamily: 'Inter, sans-serif',
-			dropShadow: { enabled: false },
-			toolbar: { show: false },
-		},
-		tooltip: {
-			enabled: true,
-			x: { show: false },
-		},
-		dataLabels: { enabled: false },
-		stroke: { width: 3, curve: 'smooth' },
-		grid: { show: true, strokeDashArray: 4, padding: { left: 2, right: 2, top: -26 } },
-		series: [{ name: 'Temperature', data: tempData ?? [0], color: '#1A56DB' }],
-		legend: { show: true },
-		xaxis: {
-			categories: timeData ?? [0],
-			labels: {
-				style: {
-					fontFamily: 'Inter, sans-serif',
-					cssClass: 'text-xs font-normal fill-gray-500 dark:fill-gray-400',
-				},
-			},
-			axisBorder: { show: false },
-			axisTicks: { show: false },
-		},
-		yaxis: { show: true },
-	})
-
-	let gasOptions: ApexOptions = $derived({
-		chart: {
-			height: 400,
-			type: 'line',
-			fontFamily: 'Inter, sans-serif',
-			dropShadow: { enabled: false },
-			toolbar: { show: false },
-		},
-		tooltip: {
-			enabled: true,
-			x: { show: false },
-		},
-		dataLabels: { enabled: false },
-		stroke: { width: 3, curve: 'smooth' },
-		grid: { show: true, strokeDashArray: 4, padding: { left: 2, right: 2, top: -26 } },
-		series: [{ name: 'Gas', data: gasData ?? [0], color: '#7E3AF2' }],
-		legend: { show: true },
-		xaxis: {
-			categories: timeData ?? [0],
-			labels: {
-				style: {
-					fontFamily: 'Inter, sans-serif',
-					cssClass: 'text-xs font-normal fill-gray-500 dark:fill-gray-400',
-				},
-			},
-			axisBorder: { show: false },
-			axisTicks: { show: false },
-		},
-		yaxis: { show: true },
-	})
-
-	let combinedOptions: ApexOptions = $derived({
-		chart: {
-			height: 400,
-			type: 'line',
-			fontFamily: 'Inter, sans-serif',
-			dropShadow: { enabled: false },
-			toolbar: { show: false },
-		},
-		tooltip: {
-			enabled: true,
-			x: { show: false },
-		},
-		dataLabels: { enabled: false },
-		stroke: { width: 3, curve: 'smooth' },
-		grid: { show: true, strokeDashArray: 4, padding: { left: 2, right: 2, top: -26 } },
-		series: [
-			{ name: 'Temperature', data: tempData ?? [0], color: '#1A56DB' },
-			{ name: 'Gas', data: gasData ?? [0], color: '#7E3AF2' },
-		],
-		legend: { show: true },
-		xaxis: {
-			categories: timeData ?? [0],
-			labels: {
-				style: {
-					fontFamily: 'Inter, sans-serif',
-					cssClass: 'text-xs font-normal fill-gray-500 dark:fill-gray-400',
-				},
-			},
-			axisBorder: { show: false },
-			axisTicks: { show: false },
-		},
-		yaxis: { show: true },
-	})
-
 	function handleReset() {
 		led = '#22c55e'
 		onBuzzer = false
@@ -364,26 +267,6 @@
 		</div>
 
 		<div class="border-t pt-6 mt-6">
-			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-xl font-semibold">Sensor Polling</h2>
-				<div class="flex items-center gap-4">
-					<div class="flex items-center gap-2">
-						<div class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"></div>
-						<p class="text-sm text-gray-600">
-							{wsConnected ? 'Live' : 'Offline'}
-						</p>
-					</div>
-					<button
-						onclick={togglePolling}
-						disabled={pollingLoading}
-						class="px-4 py-2 rounded-md text-white font-medium disabled:bg-gray-400 disabled:cursor-not-allowed {isPolling
-							? 'bg-red-600 hover:bg-red-700'
-							: 'bg-green-600 hover:bg-green-700'}"
-					>
-						{pollingLoading ? 'Loading...' : isPolling ? 'Stop Polling' : 'Start Polling'}
-					</button>
-				</div>
-			</div>
 			<div class="flex items-center gap-2 mb-2">
 				<div class="w-3 h-3 rounded-full {isPolling ? 'bg-green-500' : 'bg-gray-400'}"></div>
 				<p class="text-gray-600">
@@ -492,18 +375,26 @@
 								<span class="font-medium">Sensor</span>
 							</div>
 
-							<button
-								type="button"
-								title="buzzer"
-								class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
-								class:bg-green-500={isPolling}
-								onclick={() => togglePolling()}
-							>
-								<div
-									class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
-									class:translate-x-6={isPolling}
-								></div>
-							</button>
+							<div class="flex flex-row gap-2">
+								<div class="flex items-center gap-2">
+									<div class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"></div>
+									<p class="text-sm text-gray-600">
+										{wsConnected ? 'Live' : 'Offline'}
+									</p>
+								</div>
+								<button
+									type="button"
+									title="sensor"
+									class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
+									class:bg-green-500={isPolling}
+									onclick={() => togglePolling()}
+								>
+									<div
+										class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
+										class:translate-x-6={isPolling}
+									></div>
+								</button>
+							</div>
 						</li>
 
 						<li
@@ -642,15 +533,31 @@
 					>
 						Gas
 					</button>
+					<button
+						class="px-4 py-2 rounded-t-lg border-b-2"
+						class:border-blue-500={activeTab === 'scatterplot'}
+						class:border-gray-200={activeTab !== 'scatterplot'}
+						onclick={() => (activeTab = 'scatterplot')}
+					>
+						Scatter Plot
+					</button>
 				</div>
 				<div class="w-full mx-auto">
-					<div
-						use:chart={activeTab === 'temp'
-							? tempOptions
-							: activeTab === 'gas'
-								? gasOptions
-								: combinedOptions}
-					></div>
+					{#if activeTab !== "scatterplot"}
+						<LineChart 
+							data1={activeTab === "gas" ? [] : tempData}
+							data2={activeTab === "temp" ? [] : gasData}
+							time={timeData}
+						/>
+					{/if}
+
+					{#if activeTab === "scatterplot"}
+						<Scatterplot 
+							data1={tempData}
+							data2={gasData}
+							time={timeData}
+						/>
+					{/if}
 				</div>
 			</div>
 		</div>
