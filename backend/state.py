@@ -11,13 +11,19 @@ from sqlalchemy.orm import Session, sessionmaker
 from starlette.applications import Starlette
 from starlette.requests import HTTPConnection
 from starlette.websockets import WebSocket
+from backend.modules.websocket.websocket_service import broadcast_sensor_data
 
+from backend.models import SensorData
 from backend.models import Base
 
+from datetime import datetime
+from typing import cast
 
 import paho.mqtt.client as paho
 from paho.mqtt.client import Client
 from paho import mqtt
+
+import json
 
 
 MQTT_HOST = env.get("MQTT_HOST", "localhost")
@@ -26,9 +32,7 @@ MQTT_USER = env.get("MQTT_USER", "")
 MQTT_PASS = env.get("MQTT_PASS", "")
 
 
-def init_mqtt() -> Client:
-	client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
-
+def init_mqtt(client) -> Client:
 	def on_connect(client, userdata, flags, rc, properties=None):
 		print("CONNACK received with code %s." % rc)
 
@@ -39,10 +43,43 @@ def init_mqtt() -> Client:
 
 	client.on_publish = on_publish
 
+	def on_message(client, userdata, msg):
+		payload_str = msg.payload.decode()
+		data = json.loads(payload_str)
+		temperature = data["temperature"]
+		gas = data["gas"]
+		print(f"Temperature: {temperature}, Gas: {gas}")
+		timestamp = datetime.now()
+		with userdata.get_db() as db:
+			sensor_data = SensorData(
+				timestamp=timestamp, temperature=temperature, gas=gas
+			)
+			db.add(sensor_data)
+			db.commit()
+
+		# Broadcast to WebSocket clients
+		loop = userdata.main_loop
+		asyncio.run_coroutine_threadsafe(
+			broadcast_sensor_data(
+				userdata,
+				{
+					"id": cast(int, sensor_data.id),
+					"timestamp": timestamp.isoformat(),
+					"temperature": temperature,
+					"gas": gas,
+				},
+			),
+			loop,
+		)
+
+	client.on_message = on_message
+
 	client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
 
 	client.username_pw_set(MQTT_USER, MQTT_PASS)
 	client.connect(MQTT_HOST, MQTT_PORT)
+
+	client.subscribe("sensor/response", qos=2)
 
 	client.loop_start()
 
@@ -69,6 +106,8 @@ class AppState:
 
 	mqtt_client: Client
 
+	main_loop: asyncio.AbstractEventLoop
+
 	sensor_task: asyncio.Task[None] | None = None
 
 	@classmethod
@@ -82,14 +121,19 @@ class AppState:
 
 		Base.metadata.create_all(bind=engine)
 
+		main_loop = asyncio.get_event_loop()
+
 		state = cls(
 			db_engine=engine,
 			session=sessionmaker(
 				autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
 			),
 			ws_connections=set(),
-			mqtt_client=init_mqtt(),
+			mqtt_client=None,
+			main_loop=main_loop,
 		)
+		client = paho.Client(client_id="", userdata=state, protocol=paho.MQTTv5)
+		state.mqtt_client = init_mqtt(client)
 
 		app.state.data = state
 

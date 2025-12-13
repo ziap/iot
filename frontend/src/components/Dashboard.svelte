@@ -50,7 +50,7 @@
 	let onBuzzer: boolean = $state(false)
 	let onRelay: boolean = $state(false)
 
-	let activeTab: 'temp' | 'gas' | 'all' | "scatterplot" = $state('all')
+	let activeTab: 'temp' | 'gas' | 'all' | 'scatterplot' = $state('all')
 
 	const tempData = $derived(
 		sensorData
@@ -75,6 +75,8 @@
 
 	type StateLed = '#d43008' | '#22c55e' | '#eab308'
 
+	let led_last = $state<StateLed | null>(null)
+
 	function getLedState(temp: number, gas: number): StateLed {
 		console.log(temp, ' - ', gas)
 		if (temp >= 70) return '#d43008'
@@ -93,6 +95,7 @@
 		// Determine WebSocket URL
 		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
 		const wsUrl = `${protocol}//${window.location.host}/ws`
+		console.log(wsUrl)
 
 		const websocket = new WebSocket(wsUrl)
 
@@ -104,7 +107,6 @@
 		websocket.addEventListener('message', event => {
 			try {
 				const rawData: SensorDataRaw = JSON.parse(event.data)
-
 				// Add new data to the beginning of the array
 				sensorData.push({
 					...rawData,
@@ -198,12 +200,39 @@
 		}
 	}
 
+	async function handleRelay() {
+		onRelay = !onRelay
+		try {
+			await apiPost('/dashboard/devices/relay', { onRelay: onRelay })
+		} catch (err) {
+			console.error('Relay failed:', err)
+		}
+	}
+
+	async function handleBuzzer() {
+		onBuzzer = !onBuzzer
+		try {
+			await apiPost('/dashboard/devices/buzzer', { onBuzzer: onBuzzer })
+		} catch (err) {
+			console.error('Buzzer failed:', err)
+		}
+	}
+
+	async function handleLed(ledColor: string) {
+		try {
+			await apiPost('/dashboard/devices/led', { ledColor: ledColor })
+		} catch (err) {
+			console.error('Led failed:', err)
+		}
+	}
+
 	onMount(() => {
 		fetchDashboardData()
 		fetchPollStatus()
 
 		// Cleanup WebSocket on unmount
 		return () => {
+			console.log('disconnected WS')
 			if (ws) {
 				ws.close()
 			}
@@ -213,10 +242,20 @@
 	$effect(() => {
 		console.log('updated sensor data:', Array.from(sensorData))
 		led = getLedState(sensorData.at(-1)?.temperature || 0, sensorData.at(-1)?.gas || 0)
-
-		if (led === '#d43008') {
-			onBuzzer = true
-			onRelay = true
+		if (led_last === null || led_last !== led) {
+			console.log('12')
+			led_last = led
+			if (led === '#d43008') {
+				handleLed('red')
+				onBuzzer = false
+				onRelay = false
+				handleBuzzer()
+				handleRelay()
+			} else if (led === '#eab308') {
+				handleLed('yellow')
+			} else {
+				handleLed('green')
+			}
 		}
 		console.log(led)
 	})
@@ -234,8 +273,10 @@
 
 	function handleReset() {
 		led = '#22c55e'
-		onBuzzer = false
-		onRelay = false
+		onBuzzer = true
+		onRelay = true
+		handleBuzzer()
+		handleRelay()
 	}
 </script>
 
@@ -377,7 +418,9 @@
 
 							<div class="flex flex-row gap-2">
 								<div class="flex items-center gap-2">
-									<div class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"></div>
+									<div
+										class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"
+									></div>
 									<p class="text-sm text-gray-600">
 										{wsConnected ? 'Live' : 'Offline'}
 									</p>
@@ -445,7 +488,7 @@
 								title="buzzer"
 								class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
 								class:bg-red-500={onBuzzer}
-								onclick={() => (onBuzzer = !onBuzzer)}
+								onclick={() => handleBuzzer()}
 							>
 								<div
 									class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
@@ -493,7 +536,7 @@
 								title="relay"
 								class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
 								class:bg-red-500={onRelay}
-								onclick={() => (onRelay = !onRelay)}
+								onclick={() => handleRelay()}
 							>
 								<div
 									class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
@@ -543,20 +586,16 @@
 					</button>
 				</div>
 				<div class="w-full mx-auto">
-					{#if activeTab !== "scatterplot"}
-						<LineChart 
-							data1={activeTab === "gas" ? [] : tempData}
-							data2={activeTab === "temp" ? [] : gasData}
+					{#if activeTab !== 'scatterplot'}
+						<LineChart
+							data1={activeTab === 'gas' ? [] : tempData}
+							data2={activeTab === 'temp' ? [] : gasData}
 							time={timeData}
 						/>
 					{/if}
 
-					{#if activeTab === "scatterplot"}
-						<Scatterplot 
-							data1={tempData}
-							data2={gasData}
-							time={timeData}
-						/>
+					{#if activeTab === 'scatterplot'}
+						<Scatterplot data1={tempData} data2={gasData} time={timeData} />
 					{/if}
 				</div>
 			</div>
