@@ -20,7 +20,7 @@ async def handle_set_relay(request: Request) -> Response:
 			return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
 		else:
 			state = AppState.get(request)
-			state.mqtt_client.publish("relay", on_relay, qos=2)
+			state.mqtt_client.publish("relay", on_relay)
 
 	except (JSONDecodeError, ValueError):
 		return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
@@ -41,7 +41,7 @@ async def handle_set_buzzer(request: Request) -> Response:
 			return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
 		else:
 			state = AppState.get(request)
-			state.mqtt_client.publish("buzzer", on_buzzer, qos=2)
+			state.mqtt_client.publish("buzzer", on_buzzer)
 
 	except (JSONDecodeError, ValueError):
 		return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
@@ -62,7 +62,7 @@ async def handle_set_led_color(request: Request) -> Response:
 			return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
 		else:
 			state = AppState.get(request)
-			state.mqtt_client.publish("led", led_color, qos=2)
+			state.mqtt_client.publish("led", led_color)
 
 	except (JSONDecodeError, ValueError):
 		return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)

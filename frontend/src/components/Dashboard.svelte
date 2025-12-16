@@ -80,7 +80,7 @@
 	function getLedState(temp: number, gas: number): StateLed {
 		console.log(temp, ' - ', gas)
 		if (temp >= 70) return '#d43008'
-		if (temp >= 50 || gas >= 500) return '#eab308'
+		if (temp >= 50 || gas >= 50000) return '#eab308'
 		return '#22c55e'
 	}
 

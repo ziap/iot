@@ -79,7 +79,7 @@ def init_mqtt(client) -> Client:
 	client.username_pw_set(MQTT_USER, MQTT_PASS)
 	client.connect(MQTT_HOST, MQTT_PORT)
 
-	client.subscribe("sensor/response", qos=2)
+	client.subscribe("sensor/response")
 
 	client.loop_start()
 
