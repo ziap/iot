@@ -48,29 +48,30 @@ def init_mqtt(client) -> Client:
 		data = json.loads(payload_str)
 		temperature = data["temperature"]
 		gas = data["gas"]
-		print(f"Temperature: {temperature}, Gas: {gas}")
-		timestamp = datetime.now()
-		with userdata.get_db() as db:
-			sensor_data = SensorData(
-				timestamp=timestamp, temperature=temperature, gas=gas
-			)
-			db.add(sensor_data)
-			db.commit()
+		if temperature and gas:
+			print(f"Temperature: {temperature}, Gas: {gas}")
+			timestamp = datetime.now()
+			with userdata.get_db() as db:
+				sensor_data = SensorData(
+					timestamp=timestamp, temperature=temperature, gas=gas
+				)
+				db.add(sensor_data)
+				db.commit()
 
-		# Broadcast to WebSocket clients
-		loop = userdata.main_loop
-		asyncio.run_coroutine_threadsafe(
-			broadcast_sensor_data(
-				userdata,
-				{
-					"id": cast(int, sensor_data.id),
-					"timestamp": timestamp.isoformat(),
-					"temperature": temperature,
-					"gas": gas,
-				},
-			),
-			loop,
-		)
+			# Broadcast to WebSocket clients
+			loop = userdata.main_loop
+			asyncio.run_coroutine_threadsafe(
+				broadcast_sensor_data(
+					userdata,
+					{
+						"id": cast(int, sensor_data.id),
+						"timestamp": timestamp.isoformat(),
+						"temperature": temperature,
+						"gas": gas,
+					},
+				),
+				loop,
+			)
 
 	client.on_message = on_message
 
