@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 import json
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
-from backend.state import AppState
+if TYPE_CHECKING:
+	from backend.state import AppState
 
 
 class SensorDataDict(TypedDict):

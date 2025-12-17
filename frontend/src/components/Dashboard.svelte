@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
 	import { apiPost, apiGet } from '../utils/api'
+	import Chat, { type ChatMessage } from './Chat.svelte'
 
 	type Props = {
 		username: string
@@ -39,6 +40,20 @@
 	let pollingLoading = $state(false)
 	let ws: WebSocket | null = $state(null)
 	let wsConnected = $state(false)
+
+	type ChatResponse = {
+		messages: ChatMessage[]
+	}
+
+	// Chat callback - calls the backend API
+	async function handleChatMessage(history: ChatMessage[]): Promise<ChatMessage[]> {
+		const response = await apiPost<ChatResponse>(
+			'/chat/',
+			{ messages: history },
+			{ handleLogout: onLogout },
+		)
+		return response.messages
+	}
 
 	function connectWebSocket() {
 		// Close existing connection if any
@@ -171,65 +186,71 @@
 	})
 </script>
 
-<div class="w-full max-w-4xl mx-auto p-6">
-	<div class="bg-white rounded-lg shadow-md p-6">
-		<div class="flex items-center justify-between mb-6">
-			<div>
-				<h1 class="text-3xl font-bold">Dashboard</h1>
-				<p class="text-gray-600 mt-2">Welcome, {username}</p>
-			</div>
-			<button
-				onclick={handleLogout}
-				disabled={loading}
-				class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-			>
-				{loading ? 'Logging out...' : 'Logout'}
-			</button>
-		</div>
-
-		<div class="border-t pt-6">
-			<h2 class="text-xl font-semibold mb-4">IoT Dashboard</h2>
-			{#if fetchError}
-				<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-					{fetchError}
+<div class="flex gap-6 w-full max-h-screen justify-center">
+	<!-- Main dashboard content -->
+	<div class="w-full max-w-5xl p-4">
+		<div class="bg-white h-full p-6">
+			<div class="flex items-center justify-between mb-6">
+				<div>
+					<h1 class="text-3xl font-bold">Dashboard</h1>
+					<p class="text-gray-600 mt-2">Welcome, {username}</p>
 				</div>
-			{:else}
-				<p class="text-gray-600">Dashboard content will appear here.</p>
-			{/if}
-		</div>
+				<button
+					onclick={handleLogout}
+					disabled={loading}
+					class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+				>
+					{loading ? 'Logging out...' : 'Logout'}
+				</button>
+			</div>
 
-		<div class="border-t pt-6 mt-6">
-			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-xl font-semibold">Sensor Polling</h2>
-				<div class="flex items-center gap-4">
-					<div class="flex items-center gap-2">
-						<div class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"></div>
-						<p class="text-sm text-gray-600">
-							{wsConnected ? 'Live' : 'Offline'}
-						</p>
+			<div class="border-t pt-6">
+				<h2 class="text-xl font-semibold mb-4">IoT Dashboard</h2>
+				{#if fetchError}
+					<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+						{fetchError}
 					</div>
-					<button
-						onclick={togglePolling}
-						disabled={pollingLoading}
-						class="px-4 py-2 rounded-md text-white font-medium disabled:bg-gray-400 disabled:cursor-not-allowed {isPolling
-							? 'bg-red-600 hover:bg-red-700'
-							: 'bg-green-600 hover:bg-green-700'}"
-					>
-						{pollingLoading ? 'Loading...' : isPolling ? 'Stop Polling' : 'Start Polling'}
-					</button>
+				{:else}
+					<p class="text-gray-600">Dashboard content will appear here.</p>
+				{/if}
+			</div>
+
+			<div class="border-t pt-6 mt-6">
+				<div class="flex items-center justify-between mb-4">
+					<h2 class="text-xl font-semibold">Sensor Polling</h2>
+					<div class="flex items-center gap-4">
+						<div class="flex items-center gap-2">
+							<div class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"></div>
+							<p class="text-sm text-gray-600">
+								{wsConnected ? 'Live' : 'Offline'}
+							</p>
+						</div>
+						<button
+							onclick={togglePolling}
+							disabled={pollingLoading}
+							class="px-4 py-2 rounded-md text-white font-medium disabled:bg-gray-400 disabled:cursor-not-allowed {isPolling
+								? 'bg-red-600 hover:bg-red-700'
+								: 'bg-green-600 hover:bg-green-700'}"
+						>
+							{pollingLoading ? 'Loading...' : isPolling ? 'Stop Polling' : 'Start Polling'}
+						</button>
+					</div>
 				</div>
+				<div class="flex items-center gap-2 mb-2">
+					<div class="w-3 h-3 rounded-full {isPolling ? 'bg-green-500' : 'bg-gray-400'}"></div>
+					<p class="text-gray-600">
+						Polling: {isPolling ? 'Active' : 'Inactive'}
+					</p>
+				</div>
+				{#if sensorData.length > 0}
+					<p class="text-sm text-gray-500 mt-2">
+						{sensorData.length} sensor readings (real-time updates enabled, check console for details)
+					</p>
+				{/if}
 			</div>
-			<div class="flex items-center gap-2 mb-2">
-				<div class="w-3 h-3 rounded-full {isPolling ? 'bg-green-500' : 'bg-gray-400'}"></div>
-				<p class="text-gray-600">
-					Polling: {isPolling ? 'Active' : 'Inactive'}
-				</p>
-			</div>
-			{#if sensorData.length > 0}
-				<p class="text-sm text-gray-500 mt-2">
-					{sensorData.length} sensor readings (real-time updates enabled, check console for details)
-				</p>
-			{/if}
 		</div>
 	</div>
+
+	<!-- Chat sidebar -->
+	<Chat onSendMessage={handleChatMessage} />
 </div>
