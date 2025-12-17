@@ -45,7 +45,7 @@
 	let temp = $derived(sensorData.at(-1)?.temperature ?? 20)
 	const maxTemp = 200
 	let gas = $derived(sensorData.at(-1)?.gas ?? 0)
-	const maxGas = 2000
+	const maxGas = 8000
 
 	let onBuzzer: boolean = $state(false)
 	let onRelay: boolean = $state(false)
@@ -80,7 +80,7 @@
 	function getLedState(temp: number, gas: number): StateLed {
 		console.log(temp, ' - ', gas)
 		if (temp >= 70) return '#d43008'
-		if (temp >= 50 || gas >= 50000) return '#eab308'
+		if (temp >= 50 || gas >= 3000) return '#eab308'
 		return '#22c55e'
 	}
 
@@ -267,7 +267,7 @@
 	}
 
 	function getGasColor(t) {
-		if (t >= 500) return '#eab308' // vàng
+		if (t >= 3000) return '#eab308' // vàng
 		return '#22c55e' // xanh lá
 	}
 
@@ -284,7 +284,7 @@
 	<div class="bg-white rounded-lg shadow-md p-6">
 		<div class="flex items-center justify-between mb-6">
 			<div>
-				<h1 class="text-3xl font-bold">Dashboard</h1>
+				<h1 class="text-3xl font-bold">FireGuard</h1>
 				<p class="text-gray-600 mt-2">Welcome, {username}</p>
 			</div>
 			<button
@@ -296,309 +296,311 @@
 			</button>
 		</div>
 
-		<div class="border-t pt-6">
-			<h2 class="text-xl font-semibold mb-4">IoT Dashboard</h2>
+		<div>
 			{#if fetchError}
-				<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-					{fetchError}
+				<div>
+					<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+						{fetchError}
+					</div>
 				</div>
 			{:else}
-				<p class="text-gray-600">Dashboard content will appear here.</p>
-			{/if}
-		</div>
-
-		<div class="border-t pt-6 mt-6">
-			<div class="flex items-center gap-2 mb-2">
-				<div class="w-3 h-3 rounded-full {isPolling ? 'bg-green-500' : 'bg-gray-400'}"></div>
-				<p class="text-gray-600">
-					Polling: {isPolling ? 'Active' : 'Inactive'}
-				</p>
-			</div>
-			{#if sensorData.length > 0}
-				<p class="text-sm text-gray-500 mt-2">
-					{sensorData.length} sensor readings (real-time updates enabled, check console for details)
-				</p>
-			{/if}
-		</div>
-
-		<!-- Main Content -->
-		<div class="flex flex-col gap-14">
-			<div class="flex flex-row flex-wrap gap-4 justify-between">
-				<div class="flex flex-col gap-4 p-4 border rounded-2xl w-fit justify-between">
-					<h2 class="flex flex-row gap-3 items-center text-xl font-semibold">Temperature</h2>
-					<div class="flex justify-center items-start w-full overflow-hidden">
-						<svg
-							viewBox="0 0 250 150"
-							preserveAspectRatio="xMidYMid meet"
-							width="100%"
-							height="auto"
-						>
-							<path
-								d="M25,125 A100,100 0 0,1 225,125"
-								stroke={getTempColor(temp)}
-								stroke-width={30}
-								fill="none"
-								stroke-linecap="round"
-								stroke-opacity={0.1}
-							/>
-							<path
-								d="M25,125 A100,100 0 0,1 225,125"
-								stroke={getTempColor(temp)}
-								stroke-width={30}
-								fill="none"
-								stroke-linecap="round"
-								stroke-dasharray={314}
-								stroke-dashoffset={314 * (1 - Math.min(temp / maxTemp, 1))}
-							/>
-							<text x="125" y="125" text-anchor="middle" font-size="25" fill="black">
-								{temp}°C
-							</text>
-						</svg>
-					</div>
-				</div>
-
-				<div class="flex flex-col gap-4 p-4 border rounded-2xl w-fit justify-between">
-					<h2 class="flex flex-row gap-3 items-center text-xl font-semibold">Gas</h2>
-					<div class="flex justify-center items-start w-full overflow-hidden">
-						<svg
-							viewBox="0 0 250 150"
-							preserveAspectRatio="xMidYMid meet"
-							width="100%"
-							height="auto"
-						>
-							<path
-								d="M25,125 A100,100 0 0,1 225,125"
-								stroke={getGasColor(gas)}
-								stroke-width={30}
-								fill="none"
-								stroke-linecap="round"
-								stroke-opacity={0.1}
-							/>
-							<path
-								d="M25,125 A100,100 0 0,1 225,125"
-								stroke={getGasColor(gas)}
-								stroke-width="30"
-								fill="none"
-								stroke-linecap="round"
-								stroke-dasharray={314}
-								stroke-dashoffset={314 * (1 - Math.min(gas / maxGas, 1))}
-							/>
-							<text x="125" y="125" text-anchor="middle" font-size="25" fill="black">
-								{gas}ppm
-							</text>
-						</svg>
-					</div>
-				</div>
-
-				<div class="border rounded-2xl p-4 space-y-4 bg-white shadow-sm flex-1">
-					<!-- Header -->
-					<div class="flex flex-row justify-between items-center gap-5">
-						<div class="flex flex-row gap-2 items-center text-xl font-semibold">
-							Control Devices
+				<div>
+					<div class="border-t pt-6 mt-6">
+						<div class="flex items-center gap-2 mb-2">
+							<div class="w-3 h-3 rounded-full {isPolling ? 'bg-green-500' : 'bg-gray-400'}"></div>
+							<p class="text-gray-600">
+								Polling: {isPolling ? 'Active' : 'Inactive'}
+							</p>
 						</div>
-
-						<button
-							class="px-4 py-1.5 text-sm font-medium border rounded-xl
-								hover:bg-gray-100 active:scale-95 transition-all"
-							onclick={() => handleReset()}
-						>
-							Reset
-						</button>
+						{#if sensorData.length > 0}
+							<p class="text-sm text-gray-500 mt-2">
+								{sensorData.length} sensor readings (real-time updates enabled, check console for details)
+							</p>
+						{/if}
 					</div>
-
-					<!-- List -->
-					<ul class="flex flex-col gap-2">
-						<li
-							class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
-								bg-gray-50 hover:bg-gray-100 transition-colors"
-						>
-							<div class="flex flex-row gap-2 items-center">
-								<span class="font-medium">Sensor</span>
-							</div>
-
-							<div class="flex flex-row gap-2">
-								<div class="flex items-center gap-2">
-									<div
-										class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"
-									></div>
-									<p class="text-sm text-gray-600">
-										{wsConnected ? 'Live' : 'Offline'}
-									</p>
+		
+					<!-- Main Content -->
+					<div class="flex flex-col gap-14">
+						<div class="flex flex-row flex-wrap gap-4 justify-between">
+							<div class="flex flex-col gap-4 p-4 border rounded-2xl w-fit justify-between">
+								<h2 class="flex flex-row gap-3 items-center text-xl font-semibold">Temperature</h2>
+								<div class="flex justify-center items-start w-full overflow-hidden">
+									<svg
+										viewBox="0 0 250 150"
+										preserveAspectRatio="xMidYMid meet"
+										width="100%"
+										height="auto"
+									>
+										<path
+											d="M25,125 A100,100 0 0,1 225,125"
+											stroke={getTempColor(temp)}
+											stroke-width={30}
+											fill="none"
+											stroke-linecap="round"
+											stroke-opacity={0.1}
+										/>
+										<path
+											d="M25,125 A100,100 0 0,1 225,125"
+											stroke={getTempColor(temp)}
+											stroke-width={30}
+											fill="none"
+											stroke-linecap="round"
+											stroke-dasharray={314}
+											stroke-dashoffset={314 * (1 - Math.min(temp / maxTemp, 1))}
+										/>
+										<text x="125" y="125" text-anchor="middle" font-size="25" fill="black">
+											{temp}°C
+										</text>
+									</svg>
 								</div>
+							</div>
+			
+							<div class="flex flex-col gap-4 p-4 border rounded-2xl w-fit justify-between">
+								<h2 class="flex flex-row gap-3 items-center text-xl font-semibold">Gas</h2>
+								<div class="flex justify-center items-start w-full overflow-hidden">
+									<svg
+										viewBox="0 0 250 150"
+										preserveAspectRatio="xMidYMid meet"
+										width="100%"
+										height="auto"
+									>
+										<path
+											d="M25,125 A100,100 0 0,1 225,125"
+											stroke={getGasColor(gas)}
+											stroke-width={30}
+											fill="none"
+											stroke-linecap="round"
+											stroke-opacity={0.1}
+										/>
+										<path
+											d="M25,125 A100,100 0 0,1 225,125"
+											stroke={getGasColor(gas)}
+											stroke-width="30"
+											fill="none"
+											stroke-linecap="round"
+											stroke-dasharray={314}
+											stroke-dashoffset={314 * (1 - Math.min(gas / maxGas, 1))}
+										/>
+										<text x="125" y="125" text-anchor="middle" font-size="25" fill="black">
+											{gas}ppm
+										</text>
+									</svg>
+								</div>
+							</div>
+			
+							<div class="border rounded-2xl p-4 space-y-4 bg-white shadow-sm flex-1">
+								<!-- Header -->
+								<div class="flex flex-row justify-between items-center gap-5">
+									<div class="flex flex-row gap-2 items-center text-xl font-semibold">
+										Control Devices
+									</div>
+			
+									<button
+										class="px-4 py-1.5 text-sm font-medium border rounded-xl
+											hover:bg-gray-100 active:scale-95 transition-all"
+										onclick={() => handleReset()}
+									>
+										Reset
+									</button>
+								</div>
+			
+								<!-- List -->
+								<ul class="flex flex-col gap-2">
+									<li
+										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
+											bg-gray-50 hover:bg-gray-100 transition-colors"
+									>
+										<div class="flex flex-row gap-2 items-center">
+											<span class="font-medium">Sensor</span>
+										</div>
+			
+										<div class="flex flex-row gap-2">
+											<div class="flex items-center gap-2">
+												<div
+													class="w-3 h-3 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"
+												></div>
+												<p class="text-sm text-gray-600">
+													{wsConnected ? 'Live' : 'Offline'}
+												</p>
+											</div>
+											<button
+												type="button"
+												title="sensor"
+												class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
+												class:bg-green-500={isPolling}
+												onclick={() => togglePolling()}
+											>
+												<div
+													class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
+													class:translate-x-6={isPolling}
+												></div>
+											</button>
+										</div>
+									</li>
+			
+									<li
+										class="border rounded-xl px-4 py-3 flex flex-row items-center gap-3
+											bg-gray-50 hover:bg-gray-100 transition-colors"
+									>
+										<svg
+											class="bulb-svg"
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 384 512"
+											width={25}
+											height={25}
+											aria-hidden="false"
+											role="img"
+											aria-label="Bulb icon"
+										>
+											<path
+												class="bulb-path"
+												d="M296.5 291.1C321 265.2 336 230.4 336 192 336 112.5 271.5 48 192 48S48 112.5 48 192c0 38.4 15 73.2 39.5 99.1 21.3 22.4 44.9 54 53.3 92.9l102.4 0c8.4-39 32-70.5 53.3-92.9zm34.8 33C307.7 349 288 379.4 288 413.7l0 18.3c0 44.2-35.8 80-80 80l-32 0c-44.2 0-80-35.8-80-80l0-18.3C96 379.4 76.3 349 52.7 324.1 20 289.7 0 243.2 0 192 0 86 86 0 192 0S384 86 384 192c0 51.2-20 97.7-52.7 132.1zM144 184c0 13.3-10.7 24-24 24s-24-10.7-24-24c0-48.6 39.4-88 88-88 13.3 0 24 10.7 24 24s-10.7 24-24 24c-22.1 0-40 17.9-40 40z"
+												style="fill: {led};"
+											/>
+										</svg>
+										<span class="font-medium">LED</span>
+									</li>
+			
+									<li
+										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
+											bg-gray-50 hover:bg-gray-100 transition-colors"
+									>
+										<div class="flex flex-row gap-2 items-center">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 448 512"
+												width={25}
+												height={25}
+												class="bell-svg"
+											>
+												<path
+													d="M224 0c-13.3 0-24 10.7-24 24l0 9.7C118.6 45.3 56 115.4 56 200l0 14.5c0 37.7-10 74.7-29 107.3L5.1 359.2C1.8 365 0 371.5 0 378.2 0 399.1 16.9 416 37.8 416l372.4 0c20.9 0 37.8-16.9 37.8-37.8 0-6.7-1.8-13.3-5.1-19L421 321.7c-19-32.6-29-69.6-29-107.3l0-14.5c0-84.6-62.6-154.7-144-166.3l0-9.7c0-13.3-10.7-24-24-24zM392.4 368l-336.9 0 12.9-22.1C91.7 306 104 260.6 104 214.5l0-14.5c0-66.3 53.7-120 120-120s120 53.7 120 120l0 14.5c0 46.2 12.3 91.5 35.5 131.4L392.4 368zM156.1 464c9.9 28 36.6 48 67.9 48s58-20 67.9-48l-135.8 0z"
+													fill={onBuzzer ? '#d43008' : '#22c55e'}
+												/>
+											</svg>
+											<span class="font-medium">Buzzer</span>
+										</div>
+			
+										<button
+											type="button"
+											title="buzzer"
+											class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
+											class:bg-red-500={onBuzzer}
+											onclick={() => handleBuzzer()}
+										>
+											<div
+												class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
+												class:translate-x-6={onBuzzer}
+											></div>
+										</button>
+									</li>
+			
+									<li
+										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
+											bg-gray-50 hover:bg-gray-100 transition-colors"
+									>
+										<div class="flex flex-row gap-2 items-center">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 24 24"
+												width={25}
+												height={25}
+												fill="none"
+												stroke={onRelay ? '#d43008' : '#22c55e'}
+												stroke-width="2.2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<path
+													d="
+													M12 2
+													Q9 6 7.5 8.8
+													Q6 11.5 6 14
+													Q6 18 9 20
+													Q12 22 15 20
+													Q18 18 18 14
+													Q18 11.5 16.5 8.8
+													Q15 6 12 2
+													Z
+												"
+												/>
+											</svg>
+			
+											<span class="font-medium">Relay</span>
+										</div>
+			
+										<button
+											type="button"
+											title="relay"
+											class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
+											class:bg-red-500={onRelay}
+											onclick={() => handleRelay()}
+										>
+											<div
+												class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
+												class:translate-x-6={onRelay}
+											></div>
+										</button>
+									</li>
+								</ul>
+							</div>
+						</div>
+			
+						<div class="w-full flex flex-col gap-4">
+							<h2 class="text-xl font-semibold">Data Sensor History (Latest 10 Entries)</h2>
+							<!-- Tabs -->
+							<div class="flex gap-4 mb-4">
 								<button
-									type="button"
-									title="sensor"
-									class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
-									class:bg-green-500={isPolling}
-									onclick={() => togglePolling()}
+									class="px-4 py-2 rounded-t-lg border-b-2"
+									class:border-blue-500={activeTab === 'all'}
+									class:border-gray-200={activeTab !== 'all'}
+									onclick={() => (activeTab = 'all')}
 								>
-									<div
-										class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
-										class:translate-x-6={isPolling}
-									></div>
+									All
+								</button>
+								<button
+									class="px-4 py-2 rounded-t-lg border-b-2"
+									class:border-blue-500={activeTab === 'temp'}
+									class:border-gray-200={activeTab !== 'temp'}
+									onclick={() => (activeTab = 'temp')}
+								>
+									Temperature
+								</button>
+								<button
+									class="px-4 py-2 rounded-t-lg border-b-2"
+									class:border-blue-500={activeTab === 'gas'}
+									class:border-gray-200={activeTab !== 'gas'}
+									onclick={() => (activeTab = 'gas')}
+								>
+									Gas
+								</button>
+								<button
+									class="px-4 py-2 rounded-t-lg border-b-2"
+									class:border-blue-500={activeTab === 'scatterplot'}
+									class:border-gray-200={activeTab !== 'scatterplot'}
+									onclick={() => (activeTab = 'scatterplot')}
+								>
+									Scatter Plot
 								</button>
 							</div>
-						</li>
-
-						<li
-							class="border rounded-xl px-4 py-3 flex flex-row items-center gap-3
-								bg-gray-50 hover:bg-gray-100 transition-colors"
-						>
-							<svg
-								class="bulb-svg"
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 384 512"
-								width={25}
-								height={25}
-								aria-hidden="false"
-								role="img"
-								aria-label="Bulb icon"
-							>
-								<path
-									class="bulb-path"
-									d="M296.5 291.1C321 265.2 336 230.4 336 192 336 112.5 271.5 48 192 48S48 112.5 48 192c0 38.4 15 73.2 39.5 99.1 21.3 22.4 44.9 54 53.3 92.9l102.4 0c8.4-39 32-70.5 53.3-92.9zm34.8 33C307.7 349 288 379.4 288 413.7l0 18.3c0 44.2-35.8 80-80 80l-32 0c-44.2 0-80-35.8-80-80l0-18.3C96 379.4 76.3 349 52.7 324.1 20 289.7 0 243.2 0 192 0 86 86 0 192 0S384 86 384 192c0 51.2-20 97.7-52.7 132.1zM144 184c0 13.3-10.7 24-24 24s-24-10.7-24-24c0-48.6 39.4-88 88-88 13.3 0 24 10.7 24 24s-10.7 24-24 24c-22.1 0-40 17.9-40 40z"
-									style="fill: {led};"
-								/>
-							</svg>
-							<span class="font-medium">LED</span>
-						</li>
-
-						<li
-							class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
-								bg-gray-50 hover:bg-gray-100 transition-colors"
-						>
-							<div class="flex flex-row gap-2 items-center">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 448 512"
-									width={25}
-									height={25}
-									class="bell-svg"
-								>
-									<path
-										d="M224 0c-13.3 0-24 10.7-24 24l0 9.7C118.6 45.3 56 115.4 56 200l0 14.5c0 37.7-10 74.7-29 107.3L5.1 359.2C1.8 365 0 371.5 0 378.2 0 399.1 16.9 416 37.8 416l372.4 0c20.9 0 37.8-16.9 37.8-37.8 0-6.7-1.8-13.3-5.1-19L421 321.7c-19-32.6-29-69.6-29-107.3l0-14.5c0-84.6-62.6-154.7-144-166.3l0-9.7c0-13.3-10.7-24-24-24zM392.4 368l-336.9 0 12.9-22.1C91.7 306 104 260.6 104 214.5l0-14.5c0-66.3 53.7-120 120-120s120 53.7 120 120l0 14.5c0 46.2 12.3 91.5 35.5 131.4L392.4 368zM156.1 464c9.9 28 36.6 48 67.9 48s58-20 67.9-48l-135.8 0z"
-										fill={onBuzzer ? '#d43008' : '#22c55e'}
+							<div class="w-full mx-auto">
+								{#if activeTab !== 'scatterplot'}
+									<LineChart
+										data1={activeTab === 'gas' ? [] : tempData}
+										data2={activeTab === 'temp' ? [] : gasData}
+										time={timeData}
 									/>
-								</svg>
-								<span class="font-medium">Buzzer</span>
+								{/if}
+			
+								{#if activeTab === 'scatterplot'}
+									<Scatterplot data1={tempData} data2={gasData} time={timeData} />
+								{/if}
 							</div>
-
-							<button
-								type="button"
-								title="buzzer"
-								class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
-								class:bg-red-500={onBuzzer}
-								onclick={() => handleBuzzer()}
-							>
-								<div
-									class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
-									class:translate-x-6={onBuzzer}
-								></div>
-							</button>
-						</li>
-
-						<li
-							class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
-								bg-gray-50 hover:bg-gray-100 transition-colors"
-						>
-							<div class="flex flex-row gap-2 items-center">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									width={25}
-									height={25}
-									fill="none"
-									stroke={onRelay ? '#d43008' : '#22c55e'}
-									stroke-width="2.2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								>
-									<path
-										d="
-										M12 2
-										Q9 6 7.5 8.8
-										Q6 11.5 6 14
-										Q6 18 9 20
-										Q12 22 15 20
-										Q18 18 18 14
-										Q18 11.5 16.5 8.8
-										Q15 6 12 2
-										Z
-									"
-									/>
-								</svg>
-
-								<span class="font-medium">Relay</span>
-							</div>
-
-							<button
-								type="button"
-								title="relay"
-								class="relative w-12 h-6 flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-200"
-								class:bg-red-500={onRelay}
-								onclick={() => handleRelay()}
-							>
-								<div
-									class="absolute bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200"
-									class:translate-x-6={onRelay}
-								></div>
-							</button>
-						</li>
-					</ul>
+						</div>
+					</div>
 				</div>
-			</div>
-
-			<div class="w-full flex flex-col gap-4">
-				<h2 class="text-xl font-semibold">Data Sensor History (Latest 10 Entries)</h2>
-				<!-- Tabs -->
-				<div class="flex gap-4 mb-4">
-					<button
-						class="px-4 py-2 rounded-t-lg border-b-2"
-						class:border-blue-500={activeTab === 'all'}
-						class:border-gray-200={activeTab !== 'all'}
-						onclick={() => (activeTab = 'all')}
-					>
-						All
-					</button>
-					<button
-						class="px-4 py-2 rounded-t-lg border-b-2"
-						class:border-blue-500={activeTab === 'temp'}
-						class:border-gray-200={activeTab !== 'temp'}
-						onclick={() => (activeTab = 'temp')}
-					>
-						Temperature
-					</button>
-					<button
-						class="px-4 py-2 rounded-t-lg border-b-2"
-						class:border-blue-500={activeTab === 'gas'}
-						class:border-gray-200={activeTab !== 'gas'}
-						onclick={() => (activeTab = 'gas')}
-					>
-						Gas
-					</button>
-					<button
-						class="px-4 py-2 rounded-t-lg border-b-2"
-						class:border-blue-500={activeTab === 'scatterplot'}
-						class:border-gray-200={activeTab !== 'scatterplot'}
-						onclick={() => (activeTab = 'scatterplot')}
-					>
-						Scatter Plot
-					</button>
-				</div>
-				<div class="w-full mx-auto">
-					{#if activeTab !== 'scatterplot'}
-						<LineChart
-							data1={activeTab === 'gas' ? [] : tempData}
-							data2={activeTab === 'temp' ? [] : gasData}
-							time={timeData}
-						/>
-					{/if}
-
-					{#if activeTab === 'scatterplot'}
-						<Scatterplot data1={tempData} data2={gasData} time={timeData} />
-					{/if}
-				</div>
-			</div>
+			{/if}
 		</div>
+
 	</div>
 </div>

@@ -32,18 +32,18 @@ MQTT_USER = env.get("MQTT_USER", "")
 MQTT_PASS = env.get("MQTT_PASS", "")
 
 
-def init_mqtt(client) -> Client:
-	def on_connect(client, userdata, flags, rc, properties=None):
+def init_mqtt(client: Client) -> Client:
+	def on_connect(client, userdata, flags, rc, properties=None) -> None:
 		print("CONNACK received with code %s." % rc)
 
 	client.on_connect = on_connect
 
-	def on_publish(client, userdata, mid, properties=None):
+	def on_publish(client, userdata, mid, properties=None) -> None:
 		print("mid: " + str(mid))
 
 	client.on_publish = on_publish
 
-	def on_message(client, userdata, msg):
+	def on_message(client, userdata, msg) -> None:
 		payload_str = msg.payload.decode()
 		data = json.loads(payload_str)
 		temperature = data["temperature"]
@@ -130,11 +130,11 @@ class AppState:
 				autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
 			),
 			ws_connections=set(),
-			mqtt_client=None,
+			mqtt_client=paho.Client(client_id="", protocol=paho.MQTTv5),
 			main_loop=main_loop,
 		)
-		client = paho.Client(client_id="", userdata=state, protocol=paho.MQTTv5)
-		state.mqtt_client = init_mqtt(client)
+		state.mqtt_client.user_data_set(state)
+		state.mqtt_client = init_mqtt(state.mqtt_client)
 
 		app.state.data = state
 
