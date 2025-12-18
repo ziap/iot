@@ -312,15 +312,14 @@
 	}
 </script>
 
-
-<div class="flex gap-6 w-full max-h-screen justify-center">
+<div class="flex w-full max-h-screen justify-center">
 	<!-- Main dashboard content -->
-	<div class="w-full max-w-5xl p-4">
-		<div class="bg-white h-full p-6">
+	<div class="w-full max-w-6xl p-4">
+		<div class="bg-white h-full p-6 overflow-y-auto">
 			<div class="flex items-center justify-between mb-6">
 				<div>
 					<h1 class="text-3xl font-bold tracking-tight text-gray-900">FireGuard</h1>
-				  <p class="text-gray-500 mt-1">Welcome, {username}</p>
+					<p class="text-gray-500 mt-1">Welcome, {username}</p>
 				</div>
 				<button
 					onclick={handleLogout}
@@ -351,7 +350,7 @@
 							</p>
 						{/if}
 					</div>
-		
+
 					<!-- Main Content -->
 					<div class="flex flex-col gap-14">
 						<div class="flex flex-row flex-wrap gap-4 justify-between">
@@ -387,7 +386,7 @@
 									</svg>
 								</div>
 							</div>
-			
+
 							<div class="flex flex-col gap-4 p-4 border rounded-2xl w-fit justify-between">
 								<h2 class="flex flex-row gap-3 items-center text-xl font-semibold">Gas</h2>
 								<div class="flex justify-center items-start w-full overflow-hidden">
@@ -420,14 +419,14 @@
 									</svg>
 								</div>
 							</div>
-			
+
 							<div class="border rounded-2xl p-4 space-y-4 bg-white shadow-sm flex-1">
 								<!-- Header -->
 								<div class="flex flex-row justify-between items-center gap-5">
 									<div class="flex flex-row gap-2 items-center text-xl font-semibold">
 										Control Devices
 									</div>
-			
+
 									<button
 										class="px-4 py-1.5 text-sm font-medium border rounded-xl
 											hover:bg-gray-100 active:scale-95 transition-all"
@@ -436,7 +435,7 @@
 										Reset
 									</button>
 								</div>
-			
+
 								<!-- List -->
 								<ul class="flex flex-col gap-2">
 									<li
@@ -446,7 +445,7 @@
 										<div class="flex flex-row gap-2 items-center">
 											<span class="font-medium">Sensor</span>
 										</div>
-			
+
 										<div class="flex flex-row gap-2">
 											<div class="flex items-center gap-2">
 												<div
@@ -470,7 +469,7 @@
 											</button>
 										</div>
 									</li>
-			
+
 									<li
 										class="border rounded-xl px-4 py-3 flex flex-row items-center gap-3
 											bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -493,7 +492,7 @@
 										</svg>
 										<span class="font-medium">LED</span>
 									</li>
-			
+
 									<li
 										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
 											bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -513,7 +512,7 @@
 											</svg>
 											<span class="font-medium">Buzzer</span>
 										</div>
-			
+
 										<button
 											type="button"
 											title="buzzer"
@@ -527,7 +526,7 @@
 											></div>
 										</button>
 									</li>
-			
+
 									<li
 										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
 											bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -558,10 +557,10 @@
 												"
 												/>
 											</svg>
-			
+
 											<span class="font-medium">Relay</span>
 										</div>
-			
+
 										<button
 											type="button"
 											title="relay"
@@ -578,7 +577,7 @@
 								</ul>
 							</div>
 						</div>
-			
+
 						<div class="w-full flex flex-col gap-4">
 							<h2 class="text-xl font-semibold">Data Sensor History (Latest 10 Entries)</h2>
 							<!-- Tabs -->
@@ -624,7 +623,7 @@
 										time={timeData}
 									/>
 								{/if}
-			
+
 								{#if activeTab === 'scatterplot'}
 									<Scatterplot data1={tempData} data2={gasData} time={timeData} />
 								{/if}
@@ -634,7 +633,6 @@
 				</div>
 			{/if}
 		</div>
-
 	</div>
 
 	<!-- Chat sidebar -->

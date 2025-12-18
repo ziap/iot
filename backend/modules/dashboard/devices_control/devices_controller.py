@@ -1,22 +1,23 @@
+from json import JSONDecodeError
+
+from pydantic import ValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-from json import JSONDecodeError
 from starlette.routing import BaseRoute, Route
 
+from backend.modules.auth.auth_controller import strip_prefix
 from backend.modules.auth.auth_service import get_user
-from backend.modules.dashboard.devices_control.devices_service import (
-	set_relay,
-	set_buzzer,
-	set_led_color,
-)
-from backend.state import AppState
 from backend.modules.dashboard.devices_control.devices_models import (
 	StateBuzzer,
 	StateLed,
 	StateRelay,
 )
-from pydantic import ValidationError
-from backend.modules.auth.auth_controller import strip_prefix
+from backend.modules.dashboard.devices_control.devices_service import (
+	set_buzzer,
+	set_led_color,
+	set_relay,
+)
+from backend.state import AppState
 
 
 async def handle_set_relay(request: Request) -> Response:

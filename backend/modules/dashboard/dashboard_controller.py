@@ -4,8 +4,8 @@ from starlette.routing import BaseRoute, Mount, Route
 
 from backend.modules.auth.auth_service import get_user
 from backend.modules.dashboard.dashboard_service import get_sensor_data
-from backend.modules.dashboard.poll_control import poll_control_controller
 from backend.modules.dashboard.devices_control import devices_controller
+from backend.modules.dashboard.poll_control import poll_control_controller
 from backend.state import AppState
 
 
