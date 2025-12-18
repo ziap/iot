@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte'
 	import { apiPost, apiGet } from '../utils/api'
 	import LineChart from './LineChart.svelte'
-	import Scatterplot from './scatterplot.svelte'
+	import Scatterplot from './ScatterPlot.svelte'
 
 	type Props = {
 		username: string
@@ -280,12 +280,17 @@
 	}
 </script>
 
-<div class="w-full max-w-6xl mx-auto p-6">
-	<div class="bg-white rounded-lg shadow-md p-6">
+<!-- <div class="w-full max-w-6xl mx-auto p-6"> -->
+<div class="w-full max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+	<!-- <div class="bg-white rounded-lg shadow-md p-6"> -->
+	<div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
 		<div class="flex items-center justify-between mb-6">
 			<div>
-				<h1 class="text-3xl font-bold">FireGuard</h1>
-				<p class="text-gray-600 mt-2">Welcome, {username}</p>
+				<!-- <h1 class="text-3xl font-bold">FireGuard</h1>
+				<p class="text-gray-600 mt-2">Welcome, {username}</p> -->
+				<h1 class="text-3xl font-bold tracking-tight text-gray-900">FireGuard</h1>
+				<p class="text-gray-500 mt-1">Welcome, {username}</p>
+
 			</div>
 			<button
 				onclick={handleLogout}

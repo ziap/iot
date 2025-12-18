@@ -25,6 +25,8 @@ from paho import mqtt
 
 import json
 
+import ssl
+
 
 MQTT_HOST = env.get("MQTT_HOST", "localhost")
 MQTT_PORT = int(env.get("MQTT_PORT", 8883))
@@ -48,7 +50,7 @@ def init_mqtt(client: Client) -> Client:
 		data = json.loads(payload_str)
 		temperature = data["temperature"]
 		gas = data["gas"]
-		if temperature and gas:
+		if temperature is not None and gas is not None:
 			print(f"Temperature: {temperature}, Gas: {gas}")
 			timestamp = datetime.now()
 			with userdata.get_db() as db:
@@ -75,7 +77,7 @@ def init_mqtt(client: Client) -> Client:
 
 	client.on_message = on_message
 
-	client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
+	client.tls_set(tls_version=ssl.PROTOCOL_TLS)
 
 	client.username_pw_set(MQTT_USER, MQTT_PASS)
 	client.connect(MQTT_HOST, MQTT_PORT)
@@ -130,11 +132,10 @@ class AppState:
 				autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
 			),
 			ws_connections=set(),
-			mqtt_client=paho.Client(client_id="", protocol=paho.MQTTv5),
+			mqtt_client=init_mqtt(paho.Client(client_id="", protocol=paho.MQTTv5)),
 			main_loop=main_loop,
 		)
 		state.mqtt_client.user_data_set(state)
-		state.mqtt_client = init_mqtt(state.mqtt_client)
 
 		app.state.data = state
 

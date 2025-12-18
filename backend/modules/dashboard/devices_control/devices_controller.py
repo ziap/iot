@@ -10,6 +10,13 @@ from backend.modules.dashboard.devices_control.devices_service import (
 	set_led_color,
 )
 from backend.state import AppState
+from backend.modules.dashboard.devices_control.devices_models import (
+	StateBuzzer,
+	StateLed,
+	StateRelay,
+)
+from pydantic import ValidationError
+from backend.modules.auth.auth_controller import strip_prefix
 
 
 async def handle_set_relay(request: Request) -> Response:
@@ -18,17 +25,18 @@ async def handle_set_relay(request: Request) -> Response:
 
 	try:
 		payload = await request.json()
-		on_relay = payload.get("onRelay")
-		if on_relay is None:
-			return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
+		state_relay = StateRelay(**payload)
 
 		state = AppState.get(request)
-		set_relay(state, on_relay)
+		set_relay(state, state_relay.onRelay)
 
-		return JSONResponse({"onRelay": on_relay})
+		return JSONResponse({"onRelay": state_relay.onRelay})
 
-	except (JSONDecodeError, ValueError):
-		return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
+	except ValidationError as e:
+		first_error = e.errors()[0]
+		error_msg = first_error.get("msg", str(e))
+		error_msg = strip_prefix(error_msg, "Value error, ")
+		return Response(error_msg, status_code=400)
 
 
 async def handle_set_buzzer(request: Request) -> Response:
@@ -37,17 +45,18 @@ async def handle_set_buzzer(request: Request) -> Response:
 
 	try:
 		payload = await request.json()
-		on_buzzer = payload.get("onBuzzer")
-		if on_buzzer is None:
-			return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
+		state_buzzer = StateBuzzer(**payload)
 
 		state = AppState.get(request)
-		set_buzzer(state, on_buzzer)
+		set_buzzer(state, state_buzzer.onBuzzer)
 
-		return JSONResponse({"onBuzzer": on_buzzer})
+		return JSONResponse({"onRelay": state_buzzer.onBuzzer})
 
-	except (JSONDecodeError, ValueError):
-		return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
+	except ValidationError as e:
+		first_error = e.errors()[0]
+		error_msg = first_error.get("msg", str(e))
+		error_msg = strip_prefix(error_msg, "Value error, ")
+		return Response(error_msg, status_code=400)
 
 
 async def handle_set_led_color(request: Request) -> Response:
@@ -56,17 +65,18 @@ async def handle_set_led_color(request: Request) -> Response:
 
 	try:
 		payload = await request.json()
-		led_color = payload.get("ledColor")
-		if led_color is None:
-			return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
+		state_led = StateLed(**payload)
 
 		state = AppState.get(request)
-		set_led_color(state, led_color)
+		set_led_color(state, state_led.ledColor)
 
-		return JSONResponse({"ledColor": led_color})
+		return JSONResponse({"onRelay": state_led.ledColor})
 
-	except (JSONDecodeError, ValueError):
-		return JSONResponse({"error": "Invalid JSON payload"}, status_code=400)
+	except ValidationError as e:
+		first_error = e.errors()[0]
+		error_msg = first_error.get("msg", str(e))
+		error_msg = strip_prefix(error_msg, "Value error, ")
+		return Response(error_msg, status_code=400)
 
 
 routes: list[BaseRoute] = [
