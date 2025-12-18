@@ -5,6 +5,7 @@ from starlette.routing import BaseRoute, Mount, Route
 from backend.modules.auth.auth_service import get_user
 from backend.modules.dashboard.dashboard_service import get_sensor_data
 from backend.modules.dashboard.poll_control import poll_control_controller
+from backend.modules.dashboard.devices_control import devices_controller
 from backend.state import AppState
 
 
@@ -23,7 +24,7 @@ async def handle_dashboard(request: Request) -> Response:
 				{
 					"id": datapoint.id,
 					"timestamp": datapoint.timestamp.isoformat(),
-					"temparature": datapoint.temperature,
+					"temperature": datapoint.temperature,
 					"gas": datapoint.gas,
 				}
 				for datapoint in sensor_data
@@ -35,4 +36,5 @@ async def handle_dashboard(request: Request) -> Response:
 routes: list[BaseRoute] = [
 	Route("/", handle_dashboard, methods=["GET"]),
 	Mount("/poll", routes=poll_control_controller.routes),
+	Mount("/devices", routes=devices_controller.routes),
 ]
