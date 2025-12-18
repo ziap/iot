@@ -21,7 +21,6 @@ from typing import cast
 
 import paho.mqtt.client as paho
 from paho.mqtt.client import Client
-from paho import mqtt
 
 import json
 

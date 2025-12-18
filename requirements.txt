@@ -9,5 +9,6 @@ websockets
 uvicorn
 aiofiles
 sqlalchemy
+paho-mqtt
 
 ruff
