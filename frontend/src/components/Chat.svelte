@@ -1,19 +1,19 @@
-<script lang="ts" module>
-	export type ChatMessage = {
-		role: 'user' | 'assistant'
-		content: string
-	}
-</script>
-
 <script lang="ts">
 	import { tick } from 'svelte'
 	import MessageBody from './MessageBody.svelte'
 
-	type Props = {
-		onSendMessage: (history: ChatMessage[]) => Promise<ChatMessage[]>
+	export type ChatMessage = {
+		role: 'user' | 'assistant'
+		content: string
 	}
 
-	let { onSendMessage }: Props = $props()
+	type Props = {
+		onSendMessage: (history: ChatMessage[]) => Promise<ChatMessage[]>
+		open: boolean
+		onClose?: () => void
+	}
+
+	let { onSendMessage, open, onClose }: Props = $props()
 
 	let messages = $state<ChatMessage[]>([])
 	let inputText = $state('')
@@ -32,12 +32,10 @@
 		const text = inputText.trim()
 		if (!text || isLoading) return
 
-		// Add user message
 		messages.push({ role: 'user', content: text })
 		inputText = ''
 		await scrollToBottom()
 
-		// Get AI responses via callback
 		isLoading = true
 		try {
 			const newMessages = await onSendMessage(messages)
@@ -66,9 +64,17 @@
 	}
 </script>
 
+{#if open}
 <div class="p-4 w-lg shrink-0 flex flex-col">
-	<div class="px-4 py-3 border-b border-slate-200 bg-white">
+	<div class="flex justify-between items-center px-4 py-3 border-b border-slate-200 bg-white">
 		<h2 class="text-lg font-semibold text-slate-800">AI Assistant</h2>
+		<button
+			onclick={onClose}
+			class="text-slate-500 hover:text-slate-800 transition-colors"
+			aria-label="Close chat"
+		>
+			✕
+		</button>
 	</div>
 
 	<div bind:this={chatContainer} class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
@@ -115,3 +121,4 @@
 		</div>
 	</form>
 </div>
+{/if}
