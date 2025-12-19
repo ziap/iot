@@ -10,7 +10,12 @@ from typing import Final
 from openai.types.responses import ResponseInputParam, ToolParam
 
 from backend.models import SensorData
-from backend.state import AppState
+from backend.modules.dashboard.devices_control.devices_service import (
+	set_buzzer,
+	set_relay,
+)
+from backend.state import AppState, start_task
+from backend.tasks.poll_sensors import poll_sensors
 
 MODEL = env.get("MODEL", "gpt-4o-mini")
 
@@ -141,6 +146,67 @@ def handle_get_gas(state: AppState, arguments: dict[str, object]) -> str:
 	return format_gas_table(data)
 
 
+# Device control parameter schemas
+BOOL_STATE_PARAMS: Final = {
+	"type": "object",
+	"properties": {
+		"enabled": {
+			"type": "boolean",
+			"description": "Whether to enable (true) or disable (false) the device.",
+		},
+	},
+	"required": ["enabled"],
+	"additionalProperties": False,
+}
+
+
+def handle_set_sensor_polling(state: AppState, arguments: dict[str, object]) -> str:
+	"""Handle set_sensor_polling tool call."""
+	enabled = arguments.get("enabled")
+	if not isinstance(enabled, bool):
+		return "Error: 'enabled' must be a boolean value."
+
+	current_polling = state.sensor_task is not None
+
+	if enabled and not current_polling:
+		# Start polling
+		state.sensor_task = start_task(
+			lambda: poll_sensors(state),
+			interval=3.0,
+		)
+		return "Sensor polling started."
+	elif not enabled and current_polling:
+		# Stop polling
+		if state.sensor_task is not None:
+			state.sensor_task.cancel()
+			state.sensor_task = None
+		return "Sensor polling stopped."
+	elif enabled and current_polling:
+		return "Sensor polling is already running."
+	else:
+		return "Sensor polling is already stopped."
+
+
+def handle_set_relay(state: AppState, arguments: dict[str, object]) -> str:
+	"""Handle set_relay tool call."""
+	enabled = arguments.get("enabled")
+	if not isinstance(enabled, bool):
+		return "Error: 'enabled' must be a boolean value."
+
+	set_relay(state, enabled)
+	return f"Relay {'activated' if enabled else 'deactivated'}."
+
+
+def handle_set_buzzer(state: AppState, arguments: dict[str, object]) -> str:
+	"""Handle set_buzzer tool call."""
+	enabled = arguments.get("enabled")
+	if not isinstance(enabled, bool):
+		return "Error: 'enabled' must be a boolean value."
+
+	set_buzzer(state, enabled)
+	return f"Buzzer {'activated' if enabled else 'deactivated'}."
+
+
 TOOL_REGISTRY: Final[dict[str, Tool]] = {
 	"get_temperature": Tool(
 		definition={
@@ -161,6 +227,36 @@ TOOL_REGISTRY: Final[dict[str, Tool]] = {
 			"strict": True,
 		},
 		handler=handle_get_gas,
+	),
+	"set_sensor_polling": Tool(
+		definition={
+			"type": "function",
+			"name": "set_sensor_polling",
+			"description": "Start or stop the sensor polling task that periodically reads sensor data",
+			"parameters": BOOL_STATE_PARAMS,
+			"strict": True,
+		},
+		handler=handle_set_sensor_polling,
+	),
+	"set_relay": Tool(
+		definition={
+			"type": "function",
+			"name": "set_relay",
+			"description": "Activate or deactivate the water relay/sprinkler for fire suppression",
+			"parameters": BOOL_STATE_PARAMS,
+			"strict": True,
+		},
+		handler=handle_set_relay,
+	),
+	"set_buzzer": Tool(
+		definition={
+			"type": "function",
+			"name": "set_buzzer",
+			"description": "Activate or deactivate the buzzer alarm",
+			"parameters": BOOL_STATE_PARAMS,
+			"strict": True,
+		},
+		handler=handle_set_buzzer,
 	),
 }
 

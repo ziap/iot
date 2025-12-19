@@ -98,6 +98,32 @@
 		tool_calls: ToolCall[]
 	}
 
+	// Process tool calls and update UI state accordingly
+	function processToolCalls(toolCalls: ToolCall[]) {
+		for (const toolCall of toolCalls) {
+			switch (toolCall.name) {
+				case 'set_sensor_polling':
+					{
+						const enabled = !!toolCall.arguments.enabled
+						isPolling = enabled
+					}
+					break
+				case 'set_relay':
+					{
+						const enabled = !!toolCall.arguments.enabled
+						onRelay = enabled
+					}
+					break
+				case 'set_buzzer':
+					{
+						const enabled = !!toolCall.arguments.enabled
+						onBuzzer = enabled
+					}
+					break
+			}
+		}
+	}
+
 	// Chat callback - calls the backend API
 	async function handleChatMessage(history: ChatMessage[]): Promise<ChatMessage[]> {
 		const response = await apiPost<ChatResponse>(
@@ -114,6 +140,9 @@
 				console.log('Output:', toolCall.output)
 			}
 			console.groupEnd()
+
+			// Update UI state based on tool calls
+			processToolCalls(response.tool_calls)
 		}
 
 		return response.messages
