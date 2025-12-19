@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
 	import { apiPost, apiGet } from '../utils/api'
-	import LineChart from './LineChart.svelte'
+	import SensorHistory from './SensorHistory.svelte'
+	import PopupButton from './PopupButton.svelte'
 	import Chat, { type ChatMessage } from './Chat.svelte'
+	import chatIcon from './icons/chat.svg?raw'
 
 	type Props = {
 		username: string
@@ -40,40 +42,14 @@
 	let isPolling = $state(false)
 	let pollingLoading = $state(false)
 	let ws: WebSocket | null = $state(null)
-	let wsConnected = $state(false)
 
 	let temp = $derived(sensorData.at(-1)?.temperature ?? 20)
 	const maxTemp = 200
 	let gas = $derived(sensorData.at(-1)?.gas ?? 0)
-	const maxGas = 8000
+	const maxGas = 2000
 
 	let onBuzzer: boolean = $state(false)
 	let onRelay: boolean = $state(false)
-
-	let activeTab: 'temp' | 'gas' | 'all' = $state('all')
-
-	let openAI: boolean = $state(false)
-
-	const tempData = $derived(
-		sensorData
-			.filter(item => item && item.temperature !== undefined)
-			.map(item => item.temperature)
-			.slice(-20),
-	)
-
-	const gasData = $derived(
-		sensorData
-			.filter(item => item && item.gas !== undefined)
-			.map(item => item.gas)
-			.slice(-20),
-	)
-
-	const timeData = $derived(
-		sensorData
-			.filter(item => item && item.gas !== undefined)
-			.map(item => item.timestamp.toLocaleTimeString('vi-VN'))
-			.slice(-20),
-	)
 
 	type StateLed = '#d43008' | '#22c55e' | '#eab308'
 
@@ -82,7 +58,7 @@
 	function getLedState(temp: number, gas: number): StateLed {
 		console.log(temp, ' - ', gas)
 		if (temp >= 70) return '#d43008'
-		if (temp >= 50 || gas >= 3000) return '#eab308'
+		if (temp >= 50 || gas >= 800) return '#eab308'
 		return '#22c55e'
 	}
 
@@ -163,7 +139,7 @@
 
 		websocket.addEventListener('open', () => {
 			console.log('WebSocket connected')
-			wsConnected = true
+			ws = websocket
 		})
 
 		websocket.addEventListener('message', event => {
@@ -181,15 +157,13 @@
 
 		websocket.addEventListener('error', error => {
 			console.error('WebSocket error:', error)
-			wsConnected = false
+			ws = null
 		})
 
 		websocket.addEventListener('close', () => {
 			console.log('WebSocket disconnected')
-			wsConnected = false
+			ws = null
 		})
-
-		ws = websocket
 	}
 
 	async function fetchDashboardData() {
@@ -302,7 +276,6 @@
 	})
 
 	$effect(() => {
-		console.log('updated sensor data:', Array.from(sensorData))
 		led = getLedState(sensorData.at(-1)?.temperature || 0, sensorData.at(-1)?.gas || 0)
 		if (led_last === null || led_last !== led) {
 			console.log('12')
@@ -322,15 +295,15 @@
 		console.log(led)
 	})
 
-	function getTempColor(t) {
-		if (t >= 70) return '#d43008' // đỏ
-		if (t >= 50) return '#eab308' // vàng
+	function getTempColor(t: number) {
+		if (t >= 70) return '#d43008'
+		if (t >= 50) return '#eab308'
 		return '#22c55e' // xanh lá
 	}
 
-	function getGasColor(t) {
-		if (t >= 3000) return '#eab308' // vàng
-		return '#22c55e' // xanh lá
+	function getGasColor(t: number) {
+		if (t >= 800) return '#eab308'
+		return '#22c55e'
 	}
 
 	function handleReset() {
@@ -442,9 +415,8 @@
 						<div
 							class="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-1.5 text-[11px] font-bold text-gray-500 shadow-sm"
 						>
-							<span class="w-2 h-2 rounded-full {wsConnected ? 'bg-blue-500' : 'bg-gray-400'}"
-							></span>
-							{wsConnected ? 'Live' : 'Offline'}
+							<span class="w-2 h-2 rounded-full {ws ? 'bg-blue-500' : 'bg-gray-400'}"></span>
+							{ws ? 'Live' : 'Offline'}
 						</div>
 					</div>
 
@@ -673,49 +645,7 @@
 							</div>
 						</div>
 
-						<div class="w-full flex flex-col gap-4">
-							<h2 class="text-xl font-semibold">Data Sensor History (Latest 20 Entries)</h2>
-							<!-- Tabs -->
-							<div class="flex gap-4 mb-4">
-								<button
-									class="px-4 py-2 rounded-t-lg border-b-2"
-									class:border-blue-500={activeTab === 'all'}
-									class:border-gray-200={activeTab !== 'all'}
-									onclick={() => (activeTab = 'all')}
-								>
-									All
-								</button>
-								<button
-									class="px-4 py-2 rounded-t-lg border-b-2"
-									class:border-blue-500={activeTab === 'temp'}
-									class:border-gray-200={activeTab !== 'temp'}
-									onclick={() => (activeTab = 'temp')}
-								>
-									Temperature
-								</button>
-								<button
-									class="px-4 py-2 rounded-t-lg border-b-2"
-									class:border-blue-500={activeTab === 'gas'}
-									class:border-gray-200={activeTab !== 'gas'}
-									onclick={() => (activeTab = 'gas')}
-								>
-									Gas
-								</button>
-							</div>
-							<div class="w-full mx-auto">
-								<LineChart
-									series={[
-										...(activeTab !== 'gas'
-											? [{ data: tempData, label: 'Temperature', color: '#ef4444' }]
-											: []),
-										...(activeTab !== 'temp'
-											? [{ data: gasData, label: 'Gas', color: '#3b82f6' }]
-											: []),
-									]}
-									time={timeData}
-								/>
-							</div>
-						</div>
+						<SensorHistory {sensorData} />
 					</div>
 				</div>
 			{/if}
@@ -723,36 +653,13 @@
 	</div>
 
 	<!-- Chat sidebar -->
-	{#if openAI}
-		<!-- Backdrop for mobile/tablet -->
-		<button
-			type="button"
-			class="fixed inset-0 bg-black/50 z-40 xl:hidden"
-			onclick={() => (openAI = false)}
-			aria-label="Close chat"
-		></button>
-		<Chat onSendMessage={handleChatMessage} onClose={() => (openAI = false)} />
-	{:else}
-		<!-- Chatbot SVG button -->
-		<button
-			class="fixed bottom-4 right-4 w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors"
-			onclick={() => (openAI = true)}
-			aria-label="Open chat"
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="w-6 h-6"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8-1.652 0-3.195-.408-4.5-1.12L3 20l1.12-4.5C3.408 13.195 3 11.652 3 10c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-				/>
-			</svg>
-		</button>
-	{/if}
+	<PopupButton
+		icon={chatIcon}
+		buttonClass="bg-indigo-600 text-white hover:bg-indigo-700"
+		ariaLabel="Open chat"
+	>
+		{#snippet children({ close })}
+			<Chat onSendMessage={handleChatMessage} onClose={close} />
+		{/snippet}
+	</PopupButton>
 </div>
