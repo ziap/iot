@@ -64,7 +64,7 @@
 </script>
 
 <div
-	class="flex flex-col fixed inset-20 z-50 max-w-lg m-auto
+	class="flex flex-col fixed top-4 bottom-4 right-4 z-50 w-full max-w-lg
 	xl:relative xl:inset-auto xl:z-auto xl:w-lg xl:m-0 xl:shrink-0 xl:p-4"
 >
 	<div class="flex justify-between items-center px-4 py-3 border-b border-slate-200 bg-white">

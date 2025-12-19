@@ -416,7 +416,7 @@
 				</div>
 			{:else}
 				<div>
-					<div class="border-t py-6 flex flex-row gap-2">
+					<div class="border-t border-slate-300 py-6 flex flex-row gap-2">
 						<div
 							class="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-1.5 text-[11px] font-bold text-gray-500 shadow-sm"
 						>
@@ -451,7 +451,9 @@
 					<!-- Main Content -->
 					<div class="flex flex-col gap-14">
 						<div class="flex flex-row flex-wrap gap-4 justify-between">
-							<div class="flex flex-col gap-4 p-4 border rounded-2xl w-fit justify-between">
+							<div
+								class="flex flex-col gap-4 p-4 border border-slate-300 rounded-2xl w-fit justify-between"
+							>
 								<h2 class="flex flex-row gap-3 items-center text-xl font-semibold">Temperature</h2>
 								<div class="flex justify-center items-start w-full overflow-hidden">
 									<svg
@@ -484,7 +486,9 @@
 								</div>
 							</div>
 
-							<div class="flex flex-col gap-4 p-4 border rounded-2xl w-fit justify-between">
+							<div
+								class="flex flex-col gap-4 p-4 border border-slate-300 rounded-2xl w-fit justify-between"
+							>
 								<h2 class="flex flex-row gap-3 items-center text-xl font-semibold">Gas</h2>
 								<div class="flex justify-center items-start w-full overflow-hidden">
 									<svg
@@ -517,7 +521,9 @@
 								</div>
 							</div>
 
-							<div class="border rounded-2xl p-4 space-y-4 bg-white shadow-sm flex-1">
+							<div
+								class="border border-slate-300 rounded-2xl p-4 space-y-4 bg-white shadow-sm flex-1"
+							>
 								<!-- Header -->
 								<div class="flex flex-row justify-between items-center gap-5">
 									<div class="flex flex-row gap-2 items-center text-xl font-semibold">
@@ -525,7 +531,7 @@
 									</div>
 
 									<button
-										class="px-4 py-1.5 text-sm font-medium border rounded-xl
+										class="px-4 py-1.5 text-sm font-medium border border-slate-300 rounded-xl
 											hover:bg-gray-100 active:scale-95 transition-all"
 										onclick={() => handleReset()}
 									>
@@ -536,7 +542,7 @@
 								<!-- List -->
 								<ul class="flex flex-col gap-2">
 									<li
-										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
+										class="border border-slate-300 rounded-xl px-4 py-3 flex flex-row justify-between items-center
 											bg-gray-50 hover:bg-gray-100 transition-colors"
 									>
 										<div class="flex flex-row gap-2 items-center">
@@ -560,7 +566,7 @@
 									</li>
 
 									<li
-										class="border rounded-xl px-4 py-3 flex flex-row items-center gap-3
+										class="border border-slate-300 rounded-xl px-4 py-3 flex flex-row items-center gap-3
 											bg-gray-50 hover:bg-gray-100 transition-colors"
 									>
 										<svg
@@ -583,7 +589,7 @@
 									</li>
 
 									<li
-										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
+										class="border border-slate-300 rounded-xl px-4 py-3 flex flex-row justify-between items-center
 											bg-gray-50 hover:bg-gray-100 transition-colors"
 									>
 										<div class="flex flex-row gap-2 items-center">
@@ -617,7 +623,7 @@
 									</li>
 
 									<li
-										class="border rounded-xl px-4 py-3 flex flex-row justify-between items-center
+										class="border border-slate-300 rounded-xl px-4 py-3 flex flex-row justify-between items-center
 											bg-gray-50 hover:bg-gray-100 transition-colors"
 									>
 										<div class="flex flex-row gap-2 items-center">
@@ -698,8 +704,14 @@
 							</div>
 							<div class="w-full mx-auto">
 								<LineChart
-									data1={activeTab === 'gas' ? [] : tempData}
-									data2={activeTab === 'temp' ? [] : gasData}
+									series={[
+										...(activeTab !== 'gas'
+											? [{ data: tempData, label: 'Temperature', color: '#ef4444' }]
+											: []),
+										...(activeTab !== 'temp'
+											? [{ data: gasData, label: 'Gas', color: '#3b82f6' }]
+											: []),
+									]}
 									time={timeData}
 								/>
 							</div>
