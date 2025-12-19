@@ -683,7 +683,14 @@
 
 	<!-- Chat sidebar -->
 	{#if openAI}
-		<Chat onSendMessage={handleChatMessage} open={openAI} onClose={() => (openAI = false)} />
+		<!-- Backdrop for mobile/tablet -->
+		<button
+			type="button"
+			class="fixed inset-0 bg-black/50 z-40 xl:hidden"
+			onclick={() => (openAI = false)}
+			aria-label="Close chat"
+		></button>
+		<Chat onSendMessage={handleChatMessage} onClose={() => (openAI = false)} />
 	{:else}
 		<!-- Chatbot SVG button -->
 		<button

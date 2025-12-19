@@ -1,5 +1,3 @@
-from json import JSONDecodeError
-
 from pydantic import ValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
